@@ -1450,8 +1450,12 @@ function vaultRowHtml(x){
   if (x.recurrence) meta.push('<span class="tag">'+esc(x.recurrence)+'</span>');
   if (x.status === "done" && x.doneOn) meta.push('<span class="at">완료 '+shortDate(x.doneOn)+'</span>');
   if (x.status === "cancelled") meta.push('<span class="at">취소</span>');
-  return '<li class="vt'+cls+'">'+
-    '<i class="dot"></i>'+
+  /* 취소(- [-])는 체크 대상이 아니다 — 원본을 옵시디언에서 정리하는 편이 맞다 */
+  const lead = (x.status === "cancelled")
+    ? '<i class="dot"></i>'
+    : '<button class="check'+(x.status==="done"?" on":"")+'" data-act="vtoggle" aria-label="완료 표시"></button>';
+  return '<li class="vt'+cls+'" data-vid="'+esc(x.id||"")+'" data-vline="'+x.line+'">'+
+    lead+
     '<div class="t-body"><div class="t-text">'+esc(x.text)+'</div>'+
     '<div class="t-meta">'+meta.join("")+'</div></div>'+
     '<span class="dday'+(dd.near && x.status==="todo" ? " near" : "")+'">'+dd.label+'</span></li>';
@@ -1482,13 +1486,30 @@ function renderVaultTasks(){
     : '<div class="empty">'+(vaultAt ? "볼트에 열린 마감이 없습니다." : "…")+'</div>';
 }
 
+/* stateRequest는 ok:false를 null로 뭉개므로 쓰기에는 못 쓴다 —
+   충돌 응답의 conflict/tasks/baseModifiedTime을 그대로 받아야 한다.
+   네트워크 자체가 실패했을 때만 null. */
+async function vaultRequest(payload){
+  const url = (S.settings.scriptUrl||"").trim();
+  if (!url) return null;
+  try{
+    const res = await fetch(url, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify(Object.assign({ token:S.settings.scriptToken }, payload)),
+      redirect:"follow"
+    });
+    return await res.json();
+  }catch(err){ console.warn("볼트 요청 실패", err); return null; }
+}
+
 async function fetchVaultTasks(opts){
   opts = opts || {};
   if (!S.settings.scriptUrl){
     vaultErr = "웹 앱 URL 없음"; renderVaultTasks(); return;
   }
-  const res = await stateRequest({ action:"getTasks" });
-  if (!res || !Array.isArray(res.tasks)){
+  const res = await vaultRequest({ action:"getTasks" });
+  if (!res || !res.ok || !Array.isArray(res.tasks)){
     vaultErr = "연결 실패";
     renderVaultTasks();
     if (!opts.silent) toast("볼트 할 일을 불러오지 못했습니다.");
@@ -1510,6 +1531,80 @@ async function fetchVaultTasks(opts){
 function vaultOn(d){ return vaultTasks.filter(x=>x.due === d); }
 
 document.getElementById("vaultRefresh").addEventListener("click", ()=>fetchVaultTasks());
+
+/* ── 볼트 항목 체크 ──────────────────────────────────────
+   브리지 applyTasks가 Tasks.md의 해당 줄만 갈아끼운다.
+   baseModifiedTime 낙관적 잠금으로, 그 사이 폰·옵시디언에서 고친 것을 덮어쓰지 않는다.
+   ──────────────────────────────────────────────────── */
+let vaultBusy = false, vaultVerifyTimer = null;
+
+async function vaultToggle(li){
+  if (vaultBusy){ toast("이전 요청을 처리 중입니다."); return; }
+  const id = li.dataset.vid || null;
+  const line = Number(li.dataset.vline);
+  const task = vaultTasks.find(x => (id && x.id === id) || (!id && x.line === line));
+  if (!task) { fetchVaultTasks(); return; }
+
+  const want = (task.status !== "done");
+
+  vaultBusy = true;
+  li.style.opacity = ".5";                  /* 낙관적 표시 — 성공 여부는 응답으로 확정 */
+  const res = await vaultRequest({
+    action: "applyTasks",
+    baseModifiedTime: vaultBase,
+    ops: [{ type:"toggle", id: task.id, line: task.line, raw: task.raw, done: want }]
+  });
+  vaultBusy = false;
+  li.style.opacity = "";
+
+  if (!res){
+    toast("볼트에 반영하지 못했습니다. 연결을 확인해 주세요.");
+    return;
+  }
+  if (res.conflict){
+    vaultTasks = res.tasks || vaultTasks;
+    vaultBase = res.baseModifiedTime || vaultBase;
+    vaultAt = new Date();
+    renderCalendar(); renderVaultTasks();
+    toast("그 사이 Tasks.md가 바뀌어 최신 내용을 다시 불러왔습니다. 다시 눌러 주세요.");
+    return;
+  }
+  if (!res.ok){
+    toast("볼트 반영 실패: " + (res.error || "알 수 없음"));
+    fetchVaultTasks({silent:true});
+    return;
+  }
+
+  vaultTasks = res.tasks;
+  vaultBase = res.baseModifiedTime;
+  vaultAt = new Date();
+  renderCalendar(); renderVaultTasks();
+  toast(want ? "'"+task.text+"' 완료로 표시했습니다." : "'"+task.text+"' 완료를 해제했습니다.");
+
+  /* Drive 데스크톱이 꺼져 있으면 쓰기가 ok를 받고도 조용히 되돌려진다(2026-09-19 확인).
+     잠시 뒤 다시 읽어 실제로 남았는지 확인한다. */
+  scheduleVaultVerify(task.id, want);
+}
+
+function scheduleVaultVerify(id, want){
+  clearTimeout(vaultVerifyTimer);
+  vaultVerifyTimer = setTimeout(async ()=>{
+    const res = await vaultRequest({ action:"getTasks" });
+    if (!res || !res.ok || !Array.isArray(res.tasks)) return;
+    vaultTasks = res.tasks; vaultBase = res.baseModifiedTime; vaultAt = new Date();
+    renderCalendar(); renderVaultTasks();
+    const t = id ? res.tasks.find(x=>x.id===id) : null;
+    if (t && (t.status === "done") !== want){
+      toast("볼트 변경이 되돌려졌습니다 — PC에서 Google Drive가 실행 중인지 확인하세요.");
+    }
+  }, 30000);
+}
+
+document.getElementById("vaultList").addEventListener("click", e=>{
+  const btn = e.target.closest('button[data-act="vtoggle"]');
+  if (!btn) return;
+  vaultToggle(btn.closest("li"));
+});
 
 /* ══ 할 일 ══════════════════════════════════════════════ */
 function visibleTodos(){

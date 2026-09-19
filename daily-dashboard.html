@@ -144,6 +144,7 @@ textarea{width:100%;resize:vertical;line-height:1.75}
 .dl-kind.k-ev{color:var(--m-ev)} .dl-kind.k-todo{color:var(--m-todo)}
 .dl-kind.k-dl{color:var(--m-dl)} .dl-kind.k-rv{color:var(--m-rv)}
 .dl-kind.k-etc{color:var(--ink3)}
+.dl-kind.k-vault{color:var(--m-dl)}
 .dl-item .txt{flex:1;word-break:keep-all;overflow-wrap:break-word}
 
 /* ── 과목 칩 ────────────────────────────── */
@@ -165,6 +166,24 @@ textarea{width:100%;resize:vertical;line-height:1.75}
 .sleep-row .dur{font-family:"IBM Plex Mono",monospace;font-size:12px;text-align:right;color:var(--ink)}
 .sleep-row .dur.short{color:var(--warn)}
 .sleep-row .dur.none{color:var(--ink3)}
+
+/* ── 볼트 마감 (Tasks.md 읽기 전용) ───────── */
+.vault-head{display:flex;align-items:center;gap:8px;margin:14px 0 2px;
+  padding-bottom:5px;border-bottom:1px solid var(--rule)}
+.vault-head .lb{font-size:12px;font-weight:600;color:var(--ink2)}
+.vault-head .eyebrow{font-size:10.5px;color:var(--ink3);margin-left:auto;
+  font-family:"IBM Plex Mono",monospace}
+ul.list li.vt{align-items:baseline}
+li.vt .dot{width:7px;height:7px;flex:none;margin-top:5px;border-radius:50%;
+  background:var(--m-dl)}
+li.vt.is-done .dot,li.vt.is-cancelled .dot{background:var(--ink3)}
+li.vt .dday{font-family:"IBM Plex Mono",monospace;font-size:11px;flex:none;
+  width:48px;text-align:right;color:var(--ink3)}
+li.vt .dday.near{color:var(--m-dl);font-weight:600}
+li.vt .sec{font-size:10.5px;color:var(--ink3);
+  font-family:"IBM Plex Mono",monospace}
+li.vt.is-done .t-text,li.vt.is-cancelled .t-text{color:var(--ink3);
+  text-decoration:line-through}
 
 /* ── 할 일 ──────────────────────────────── */
 .tabs{display:flex;gap:2px;margin:12px 0 4px}
@@ -509,6 +528,18 @@ code{font-family:"IBM Plex Mono",monospace;font-size:11.5px;background:var(--pap
         <button class="tab" data-scope="week">이번 주</button>
         <button class="tab" data-scope="all">전체</button>
       </div>
+      <div id="vaultWrap">
+        <div class="vault-head">
+          <span class="lb">볼트 마감 · Tasks.md</span>
+          <button class="ghost sm" id="vaultRefresh">새로고침</button>
+          <span class="eyebrow" id="vaultStatus">불러오는 중…</span>
+        </div>
+        <ul class="list" id="vaultList"></ul>
+      </div>
+      <div class="vault-head">
+        <span class="lb">대시보드 할 일</span>
+        <span class="eyebrow" id="todoScopeLabel"></span>
+      </div>
       <ul class="list" id="todoList"></ul>
       <details class="done-section" id="doneTodosWrap" style="display:none">
         <summary id="doneTodosHead">완료한 할 일</summary>
@@ -850,6 +881,9 @@ let S = { version:5, savedAt:0, settings:Object.assign({},DEFAULTS),
   sleep:{}, journal:{}, reviews:[], routine:[], applications:[],
   dismissedPlans:[] /* 삭제한 계획의 {subject,goal} — 추천 계획 불러오기가 되살리지 않도록 기억 */ };
 let scope = "today", saveTimer = null, remoteSaveTimer = null, remoteSyncing = false;
+/* 볼트(Tasks.md) 할 일 — 읽기 전용. 브리지 getTasks로 가져오며 S에 저장하지 않는다.
+   대시보드 자체 할 일(S.todos)과 섞이면 원본이 둘이 되므로 의도적으로 분리한다. */
+let vaultTasks = [], vaultAt = null, vaultBase = null, vaultErr = null;
 function save(){
   S.savedAt = Date.now();
   clearTimeout(saveTimer); saveTimer = setTimeout(()=>Store.save(S), 260);
@@ -1045,14 +1079,15 @@ function renderCalendar(){
     const inMonth = d.slice(0,7)===calMonth;
     const nTodo = S.todos.filter(x=>x.due===d && !x.done).length;
     const nEv = eventsOn(d).length;                      /* 가져온 일정은 제외 */
-    const nDl = S.deadlines.filter(x=>x.date===d).length;
+    const nVt = vaultTasks.filter(x=>x.due===d && x.status==="todo").length;
+    const nDl = S.deadlines.filter(x=>x.date===d).length + nVt;
     const nRv = S.reviews.filter(r=>r.nextDue===d).length;
     const hasJr = !!(S.journal[d] && S.journal[d].trim());
     const marks =
       (nTodo?'<i class="mk todo"></i>':"")+(nEv?'<i class="mk gcal">G</i>':"")+
       (nDl?'<i class="mk dl"></i>':"")+(nRv?'<i class="mk rv">R</i>':"")+
       (hasJr?'<i class="mk jr">W</i>':"");
-    const title = [nTodo?"할 일 "+nTodo:"", nEv?"일정 "+nEv:"", nDl?"마감 "+nDl:"",
+    const title = [nTodo?"할 일 "+nTodo:"", nEv?"일정 "+nEv:"", nDl?"마감 "+nDl+(nVt?"(볼트 "+nVt+")":""):"",
                    nRv?"복습 "+nRv:"", hasJr?"기록 있음":""].filter(Boolean).join(" · ");
     const dow = new Date(d+"T00:00:00").getDay();
     return '<button class="cell'+(inMonth?"":" out")+(d===t?" now":"")+
@@ -1098,6 +1133,9 @@ function renderDayBox(){
 
   let rows = "";
   dls.forEach(x=>rows+='<div class="dl-item"><span class="dl-kind k-dl">마감</span><span class="txt">'+esc(x.title)+'</span></div>');
+  vaultOn(d).forEach(x=>rows+='<div class="dl-item"><span class="dl-kind k-vault">볼트</span><span class="txt">'+
+    (x.status==="todo" ? esc(x.text) : '<s style="color:var(--ink3)">'+esc(x.text)+'</s>')+
+    (x.section?' <span class="at">'+esc(x.section)+'</span>':"")+'</span></div>');
   evs.forEach(x=>rows+='<div class="dl-item"><span class="dl-kind k-ev">'+(x.time||"종일")+'</span><span class="txt">'+esc(x.title)+'</span></div>');
   todos.forEach(x=>rows+='<div class="dl-item"><span class="dl-kind k-todo">'+(x.gcalId?"일정":"할 일")+'</span><span class="txt">'+
     (x.done?'<s style="color:var(--ink3)">'+esc(x.text)+'</s>':esc(x.text))+
@@ -1374,6 +1412,105 @@ function reviewClick(e){
 document.getElementById("rvDueList").addEventListener("click", reviewClick);
 document.getElementById("rvSoonList").addEventListener("click", reviewClick);
 
+/* ══ 볼트 마감 (Tasks.md) ═══════════════════════════════
+   옵시디언 vault의 agent-workplace/Schedule/Tasks.md를 브리지 getTasks로
+   읽어 온다. 읽기 전용 — 여기서 체크하거나 고칠 수 없다. 원본은 옵시디언.
+   S에 저장하지 않으므로 기기 간 동기화(saveState)에도 섞이지 않는다.
+   ══════════════════════════════════════════════════════ */
+
+/* 볼트 할 일 → 이 대시보드의 날짜 기준으로 쓸 수 있게 정리 */
+function vtActive(x){ return x.status === "todo"; }
+
+/* 볼트 섹션은 위쪽 오늘/내일/이번 주 탭을 따르지 않는다.
+   마감은 앞을 내다보려고 보는 것이라, 이번 주에 아무 마감이 없다고 해서
+   칸을 비우면 정작 필요한 정보(다음 마감이 언제인지)가 사라진다.
+   그래서 열려 있는 항목은 날짜와 무관하게 전부 보여주고,
+   완료·취소된 항목만 "전체" 탭에서 함께 보인다. */
+function vtInScope(x){
+  return vtActive(x) || scope === "all";
+}
+
+function vtDday(due){
+  if (!due) return { label:"—", near:false };
+  const n = diffDays(today(), due);
+  if (n === 0) return { label:"오늘", near:true };
+  if (n < 0)   return { label:"D+"+Math.abs(n), near:true };
+  return { label:"D-"+n, near: n <= 7 };
+}
+
+function vaultRowHtml(x){
+  const dd = vtDday(x.due);
+  const cls = x.status === "done" ? " is-done"
+            : x.status === "cancelled" ? " is-cancelled" : "";
+  const meta = [];
+  if (x.section) meta.push('<span class="sec">'+esc(x.section)+'</span>');
+  if (x.due) meta.push('<span class="due">'+shortDate(x.due)+'</span>');
+  if (x.priority === "high") meta.push('<span class="pri high">HIGH</span>');
+  else if (x.priority === "low") meta.push('<span class="pri low">LOW</span>');
+  if (x.recurrence) meta.push('<span class="tag">'+esc(x.recurrence)+'</span>');
+  if (x.status === "done" && x.doneOn) meta.push('<span class="at">완료 '+shortDate(x.doneOn)+'</span>');
+  if (x.status === "cancelled") meta.push('<span class="at">취소</span>');
+  return '<li class="vt'+cls+'">'+
+    '<i class="dot"></i>'+
+    '<div class="t-body"><div class="t-text">'+esc(x.text)+'</div>'+
+    '<div class="t-meta">'+meta.join("")+'</div></div>'+
+    '<span class="dday'+(dd.near && x.status==="todo" ? " near" : "")+'">'+dd.label+'</span></li>';
+}
+
+function renderVaultTasks(){
+  const listEl = document.getElementById("vaultList");
+  const statEl = document.getElementById("vaultStatus");
+  if (!listEl) return;
+
+  if (vaultErr){
+    statEl.textContent = vaultErr;
+    listEl.innerHTML = '<div class="empty">볼트 할 일을 불러오지 못했습니다.</div>';
+    return;
+  }
+  const openN = vaultTasks.filter(vtActive).length;
+  statEl.textContent = (vaultAt ? (openN + "건 · 갱신 " + hm(vaultAt)) : "불러오는 중…");
+
+  const shown = vaultTasks.filter(vtInScope);
+  const act = shown.filter(vtActive)
+    .sort((a,b)=> (a.due||"9999-99-99").localeCompare(b.due||"9999-99-99"));
+  const rest = shown.filter(x=>!vtActive(x))
+    .sort((a,b)=> (b.due||"").localeCompare(a.due||""));
+
+  const rows = act.concat(rest);
+  listEl.innerHTML = rows.length
+    ? rows.map(vaultRowHtml).join("")
+    : '<div class="empty">'+(vaultAt ? "볼트에 열린 마감이 없습니다." : "…")+'</div>';
+}
+
+async function fetchVaultTasks(opts){
+  opts = opts || {};
+  if (!S.settings.scriptUrl){
+    vaultErr = "웹 앱 URL 없음"; renderVaultTasks(); return;
+  }
+  const res = await stateRequest({ action:"getTasks" });
+  if (!res || !Array.isArray(res.tasks)){
+    vaultErr = "연결 실패";
+    renderVaultTasks();
+    if (!opts.silent) toast("볼트 할 일을 불러오지 못했습니다.");
+    return;
+  }
+  vaultErr = null;
+  vaultTasks = res.tasks;
+  vaultBase = res.baseModifiedTime || null;   /* 이후 쓰기 단계의 낙관적 잠금용 */
+  vaultAt = new Date();
+  renderCalendar();          /* 달력 마감 점에도 반영 */
+  renderVaultTasks();
+  if (!opts.silent){
+    const n = vaultTasks.filter(vtActive).length;
+    toast("볼트 할 일 " + n + "개를 불러왔습니다.");
+  }
+}
+
+/* 선택 날짜에 걸리는 볼트 항목 */
+function vaultOn(d){ return vaultTasks.filter(x=>x.due === d); }
+
+document.getElementById("vaultRefresh").addEventListener("click", ()=>fetchVaultTasks());
+
 /* ══ 할 일 ══════════════════════════════════════════════ */
 function visibleTodos(){
   const t = today(), tm = addDays(t,1), ws = weekStart(), we = weekEnd();
@@ -1412,6 +1549,9 @@ function renderTodos(){
     (b.doneAt||"").localeCompare(a.doneAt||"") || b.createdAt.localeCompare(a.createdAt));
 
   document.getElementById("todoCount").textContent = active.length+" / "+all.length;
+  const scLabel = { today:"오늘", tomorrow:"내일", week:"이번 주", all:"전체" }[scope] || "";
+  const scEl = document.getElementById("todoScopeLabel");
+  if (scEl) scEl.textContent = scLabel;
   document.getElementById("todoList").innerHTML = active.length
     ? active.map(todoRowHtml).join("")
     : (done.length
@@ -1447,7 +1587,7 @@ document.getElementById("todoList").addEventListener("click", todoListClick);
 document.getElementById("doneTodoList").addEventListener("click", todoListClick);
 document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click", ()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
-  tab.classList.add("on"); scope = tab.dataset.scope; renderTodos();
+  tab.classList.add("on"); scope = tab.dataset.scope; renderTodos(); renderVaultTasks();
 }));
 function addTodo(){
   const input = document.getElementById("todoText");
@@ -2589,7 +2729,7 @@ document.getElementById("sheetClose").addEventListener("click", async ()=>{
   if (mode()==="script" && S.settings.scriptUrl) await initialSync({render:true});
   save();
   renderAll();
-  if (mode()==="script" && S.settings.scriptUrl) syncCalendar();
+  if (mode()==="script" && S.settings.scriptUrl){ syncCalendar(); fetchVaultTasks({silent:true}); }
 });
 document.getElementById("btnSyncNow").addEventListener("click", ()=>initialSync({render:true}));
 document.getElementById("sheet").addEventListener("click", e=>{
@@ -2704,7 +2844,7 @@ document.getElementById("undoBtn").addEventListener("click", ()=>{
 
 /* ══ 전체 렌더 ══════════════════════════════════════════ */
 function renderAll(){
-  renderHeader(); renderCalendar(); renderTodos();
+  renderHeader(); renderCalendar(); renderTodos(); renderVaultTasks();
   renderTimetable();
   barSet("todayBars", today(), today());
   renderPlans(); renderRoutine(); renderHabits(); renderSleep(); renderReviews();
@@ -2736,6 +2876,7 @@ function renderAll(){
 
   if (mode()==="script" && S.settings.scriptUrl){
     syncCalendar();
+    fetchVaultTasks({silent:true});
   } else if (mode()==="oauth" && S.settings.clientId){
     let tries = 0;
     const wait = setInterval(()=>{
@@ -2756,6 +2897,7 @@ function renderAll(){
       calMonth = curDay.slice(0,7);
       document.getElementById("journal").dataset.d = "";
       renderAll();
+      fetchVaultTasks({silent:true});
     }
   }, 60000);
 })();

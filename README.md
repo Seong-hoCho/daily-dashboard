@@ -1,4 +1,4 @@
-# Seong-hoCho.github.io
+# daily-dashboard
 
 Personal daily dashboard (to-dos, study plan, routine, habits, sleep, spaced-repetition
 review, Google Calendar sync) served as a static page via GitHub Pages.

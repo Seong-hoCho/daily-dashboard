@@ -79,6 +79,7 @@ header.top{padding:26px 0 14px;display:flex;align-items:flex-start;gap:16px;flex
 .card>h2 .count{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--ink3);border:1px solid var(--rule);border-radius:20px;padding:1px 7px;font-weight:500}
 .card>h2 .count.due{color:var(--signal);border-color:var(--signal)}
 .card>h2 .spacer{margin-left:auto}
+.garden-link{font-size:12px;font-weight:500;color:var(--ink2);text-decoration:none;border:1px solid var(--rule);border-radius:20px;padding:3px 10px}.garden-link:hover{color:var(--ink);border-color:var(--ink3)}
 .card.wide{grid-column:1 / -1}
 .subhead{border-top:1px solid var(--rule2);margin:16px 0 11px;padding-top:11px}
 
@@ -760,7 +761,7 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
 
     <!-- 습관 -->
     <section data-tab="today" class="card">
-      <h2>습관 <span class="count" id="habitCount">0</span></h2>
+      <h2>습관 <span class="count" id="habitCount">0</span><span class="spacer"></span><a class="garden-link" href="habit-sprout/" title="습관 기록으로 자라는 정원 게임">정원 ↗</a></h2>
       <div class="row">
         <input type="text" id="habitName" class="grow" placeholder="습관 이름 (예: 기상 7시)">
         <button class="btn" id="habitAdd">추가</button>
@@ -3315,6 +3316,21 @@ function renderAll(){
     if (document.visibilityState === "visible") refreshRemote("resume");
   });
   window.addEventListener("online", ()=>{ lastRefresh = 0; refreshRemote("resume"); });
+  /* 같은 출처의 다른 탭(습관 정원 게임 habit-sprout/ 등)이 저장소를 바꾸면 따라간다 (2026-09-23).
+     더 최신(savedAt)일 때만 채택 — 이 탭에서 방금 고친 내용이 더 최신이면 그대로 둔다.
+     게임은 원격을 먼저 읽고 합친 뒤 올리므로, 그 savedAt을 기준값으로 삼아
+     "다른 기기의 변경 감지"가 잘못 뜨지 않게 한다. */
+  window.addEventListener("storage", e=>{
+    if (e.key !== KEY || !e.newValue) return;
+    let next; try{ next = JSON.parse(e.newValue); }catch(err){ return; }
+    if (!next || (next.savedAt||0) <= (S.savedAt||0)) return;
+    S = Object.assign(S, next);
+    S.settings = Object.assign({}, DEFAULTS, S.settings||{});
+    S.sleep = S.sleep||{}; S.journal = S.journal||{}; S.reviews = S.reviews||[];
+    S.routine = S.routine||[]; S.applications = S.applications||[];
+    lastKnownRemoteSavedAt = Math.max(lastKnownRemoteSavedAt, S.savedAt||0);
+    renderAll();
+  });
   setInterval(()=>{
     if (document.visibilityState === "visible" && Date.now() - lastRefresh >= 600000) refreshRemote("tick");
   }, 60000);

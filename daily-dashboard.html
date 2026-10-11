@@ -183,6 +183,7 @@ li.ce .ce-time{font-family:"IBM Plex Mono",monospace;font-size:11.5px;flex:none;
   width:84px;color:var(--m-ev);font-weight:500;font-variant-numeric:tabular-nums}
 li.ce.is-past .ce-time,li.ce.is-past .t-text{color:var(--ink3)}
 
+li.vt.is-editing{background:var(--accent-soft);box-shadow:-3px 0 0 var(--accent)}
 label.chk{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink2);white-space:nowrap}
 label.chk input{width:15px;height:15px;margin:0;accent-color:var(--accent)}
 
@@ -653,6 +654,7 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
       <div class="row form-row">
         <input type="text" id="todoText" class="grow" placeholder="할 일을 입력하고 Enter">
         <button class="btn" id="todoAdd">추가</button>
+        <button type="button" class="ghost" id="todoCancelEdit" style="display:none">취소</button>
       </div>
       <div class="row u-inline-3">
         <select id="todoPri">
@@ -1725,11 +1727,15 @@ function vaultRowHtml(x){
   const lead = (x.status === "cancelled")
     ? '<i class="dot"></i>'
     : '<button class="check'+(x.status==="done"?" on":"")+'" data-act="vtoggle" aria-label="완료 표시"></button>';
-  return '<li class="vt'+cls+'" data-vid="'+esc(x.id||"")+'" data-vline="'+x.line+'">'+
+  const editing = !!editingVault && ((editingVault.id && editingVault.id === x.id) ||
+    (!editingVault.id && editingVault.raw === x.raw));
+  return '<li class="vt'+cls+(editing?" is-editing":"")+'" data-vid="'+esc(x.id||"")+'" data-vline="'+x.line+'">'+
     lead+
     '<div class="t-body"><div class="t-text">'+esc(x.text)+'</div>'+
     '<div class="t-meta">'+meta.join("")+'</div></div>'+
-    '<span class="dday'+(dd.near && x.status==="todo" ? " near" : "")+'">'+dd.label+'</span></li>';
+    '<span class="dday'+(dd.near && x.status==="todo" ? " near" : "")+'">'+dd.label+'</span>'+
+    (x.status==="todo" ? '<button class="icon-btn" data-act="vedit" title="수정" aria-label="수정">✎</button>' : "")+
+    '</li>';
 }
 
 function renderVaultTasks(){
@@ -1906,10 +1912,84 @@ function scheduleVaultVerify(id, want){
 }
 
 document.getElementById("vaultList").addEventListener("click", e=>{
-  const btn = e.target.closest('button[data-act="vtoggle"]');
+  const btn = e.target.closest('button[data-act]');
   if (!btn) return;
-  vaultToggle(btn.closest("li"));
+  if (btn.dataset.act === "vtoggle") vaultToggle(btn.closest("li"));
+  else if (btn.dataset.act === "vedit") startVaultEdit(btn.closest("li"));
 });
+
+/* ── 볼트 항목 수정 ──────────────────────────────────────
+   위쪽 입력 폼을 그대로 편집 폼으로 쓴다(공부 계획의 '수정'과 같은 방식).
+   브리지 applyTasks의 edit(v12)가 그 줄만 다시 쓴다. 섹션과 우선순위는
+   사용자가 실제로 바꿨을 때만 보낸다 — 화면에 없는 값(### 하위 구분,
+   중간 우선순위 🔼)을 건드리지 않기 위함. */
+let editingVault = null;
+function resetTodoForm(){
+  editingVault = null;
+  document.getElementById("todoText").value = "";
+  document.getElementById("todoTag").value = "";
+  document.getElementById("todoDue").value = "";
+  document.getElementById("todoPri").value = "normal";
+  document.getElementById("todoDeadline").checked = false;
+  const tEl = document.getElementById("todoTime");
+  tEl.value = ""; tEl.disabled = false;
+  document.getElementById("todoAdd").textContent = "추가";
+  document.getElementById("todoCancelEdit").style.display = "none";
+  renderVaultTasks();
+}
+function startVaultEdit(li){
+  if (todoBusy || vaultBusy){ toast("이전 요청을 처리 중입니다."); return; }
+  const id = li.dataset.vid || null, line = Number(li.dataset.vline);
+  const task = vaultTasks.find(x => (id && x.id === id) || (!id && x.line === line));
+  if (!task){ fetchVaultTasks(); return; }
+  const pri = task.priority === "high" ? "high" : task.priority === "low" ? "low" : "normal";
+  editingVault = { id: task.id || null, line: task.line, raw: task.raw,
+    section: task.section || "", pri };
+  document.getElementById("todoText").value = task.text;
+  document.getElementById("todoTag").value = task.section || "";
+  document.getElementById("todoDue").value = task.due || "";
+  document.getElementById("todoPri").value = pri;
+  document.getElementById("todoDeadline").checked = (task.tags || []).indexOf("#deadline") > -1;
+  const tEl = document.getElementById("todoTime");
+  tEl.value = ""; tEl.disabled = true;            /* 시간은 캘린더 일정의 것 */
+  document.getElementById("todoAdd").textContent = "저장";
+  document.getElementById("todoCancelEdit").style.display = "";
+  renderVaultTasks();
+  const input = document.getElementById("todoText");
+  input.scrollIntoView({ block:"center", behavior:"smooth" });
+  input.focus();
+}
+async function saveVaultEdit(){
+  const ev = editingVault; if (!ev) return;
+  const text = document.getElementById("todoText").value.trim();
+  if (!text){ toast("내용을 입력하세요."); return; }
+  if (todoBusy){ toast("이전 요청을 처리 중입니다."); return; }
+  const op = { type:"edit", id: ev.id, line: ev.line, raw: ev.raw, text,
+    due: document.getElementById("todoDue").value || null,
+    deadline: document.getElementById("todoDeadline").checked };
+  const sec = document.getElementById("todoTag").value.trim();
+  if (sec && sec !== ev.section) op.section = sec;
+  const pri = document.getElementById("todoPri").value;
+  if (pri !== ev.pri) op.priority = vaultPriority(pri);
+
+  const btn = document.getElementById("todoAdd");
+  todoBusy = true; btn.disabled = true;
+  const res = await vaultApply([op]);
+  todoBusy = false; btn.disabled = false;
+  if (res && res.ok){
+    resetTodoForm(); renderAll();
+    toast("'"+text+"' 수정했습니다.");
+  } else if (!res){
+    toast("Tasks.md에 반영됐는지 확인하지 못했습니다. 목록을 다시 불러옵니다.");
+    fetchVaultTasks({silent:true});
+  } else if (/알 수 없는 작업/.test(res.error || "")){
+    toast("브리지가 수정을 아직 지원하지 않습니다 — Apps Script를 v12로 배포해야 합니다.");
+  } else {
+    renderAll();
+    toast("수정 실패: " + (res.error || "알 수 없음"));
+  }
+}
+document.getElementById("todoCancelEdit").addEventListener("click", resetTodoForm);
 
 /* ══ 할 일 ══════════════════════════════════════════════ */
 function visibleTodos(){
@@ -2004,6 +2084,7 @@ document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click", ()=
 let todoBusy = false;
 function vaultPriority(p){ return p==="high" ? "high" : p==="low" ? "low" : null; }
 async function addTodo(){
+  if (editingVault) return saveVaultEdit();
   const input = document.getElementById("todoText");
   const text = input.value.trim(); if(!text) return;
   if (todoBusy){ toast("이전 요청을 처리 중입니다."); return; }
@@ -2089,7 +2170,10 @@ async function migrateLocalTodos(){
 }
 document.getElementById("todoMigrate").addEventListener("click", migrateLocalTodos);
 document.getElementById("todoAdd").addEventListener("click", addTodo);
-document.getElementById("todoText").addEventListener("keydown", e=>{ if(e.key==="Enter") addTodo(); });
+document.getElementById("todoText").addEventListener("keydown", e=>{
+  if (e.key==="Enter") addTodo();
+  else if (e.key==="Escape" && editingVault) resetTodoForm();
+});
 document.getElementById("todoTomorrow").addEventListener("click", ()=>{
   document.getElementById("todoDue").value = addDays(today(),1);
   document.getElementById("todoText").focus();

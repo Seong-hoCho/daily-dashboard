@@ -177,6 +177,12 @@ li.vt .sec{font-size:10.5px;color:var(--ink3);
 li.vt.is-done .t-text,li.vt.is-cancelled .t-text{color:var(--ink3);
   text-decoration:line-through}
 
+/* ── 캘린더 일정 (할 일 카드 안, 읽기 전용) ── */
+ul.list li.ce{align-items:baseline}
+li.ce .ce-time{font-family:"IBM Plex Mono",monospace;font-size:11.5px;flex:none;
+  width:84px;color:var(--m-ev);font-weight:500;font-variant-numeric:tabular-nums}
+li.ce.is-past .ce-time,li.ce.is-past .t-text{color:var(--ink3)}
+
 /* ── 할 일 ──────────────────────────────── */
 .tabs{display:flex;gap:2px;margin:12px 0 4px}
 .tab{background:none;border:none;border-bottom:2px solid transparent;padding:5px 9px;font-size:12px;color:var(--ink3);font-weight:500}
@@ -661,6 +667,13 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
         <button class="tab" data-scope="tomorrow">내일</button>
         <button class="tab" data-scope="week">이번 주</button>
         <button class="tab" data-scope="all">전체</button>
+      </div>
+      <div id="calTodayWrap">
+        <div class="vault-head">
+          <span class="lb" id="calTodayLabel">오늘 일정 · Google Calendar</span>
+          <span class="eyebrow" id="calTodayStatus" aria-live="polite">불러오는 중…</span>
+        </div>
+        <ul class="list" id="calTodayList"></ul>
       </div>
       <div id="vaultWrap">
         <div class="vault-head">
@@ -1935,7 +1948,7 @@ document.getElementById("todoList").addEventListener("click", todoListClick);
 document.getElementById("doneTodoList").addEventListener("click", todoListClick);
 document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click", ()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
-  tab.classList.add("on"); scope = tab.dataset.scope; renderTodos(); renderVaultTasks();
+  tab.classList.add("on"); scope = tab.dataset.scope; renderTodos(); renderVaultTasks(); renderCalToday();
 }));
 function addTodo(){
   const input = document.getElementById("todoText");
@@ -2809,10 +2822,10 @@ async function oauthFetch(url, opts, retry){
 /* 달을 빠르게 넘기면 요청이 겹치는데, 응답이 순서대로 온다는 보장이 없다.
    늦게 도착한 이전 달 응답이 eventsByDate를 통째로 덮어써 일정 점이
    사라졌다 나타나던 문제 — 가장 마지막 요청의 응답만 반영한다. */
-let calSeq = 0, calLastOk = 0;
+let calSeq = 0, calLastOk = 0, calErr = false;
 async function syncCalendar(opts){
   opts = opts || {};
-  if (mode()==="off"){ eventsByDate={}; renderCalendar(); renderEventList(); return; }
+  if (mode()==="off"){ eventsByDate={}; calErr=false; renderCalendar(); renderEventList(); return; }
   const mySeq = ++calSeq;
   const grid = gridDays(calMonth), t = today();
   const from = grid[0] < t ? grid[0] : t;
@@ -2826,7 +2839,7 @@ async function syncCalendar(opts){
       _quiet: !!opts.quiet
     });
     if (mySeq !== calSeq) return;      /* 더 최근 요청이 있다 — 버린다 */
-    if (!d) return;
+    if (!d){ calErr = true; renderCalToday(); return; }
     raw = d.events || [];
   } else {
     if (!accessToken) return;
@@ -2835,7 +2848,7 @@ async function syncCalendar(opts){
       "&singleEvents=true&orderBy=startTime&maxResults=250";
     const data = await oauthFetch(url);
     if (mySeq !== calSeq) return;
-    if (!data) return;
+    if (!data){ calErr = true; renderCalToday(); return; }
     raw = (data.items||[]).map(ev=>{
       const allDay = !!(ev.start && ev.start.date);
       return {
@@ -2862,10 +2875,71 @@ async function syncCalendar(opts){
       time: ev.allDay ? "" : hm(sd), dur
     });
   });
-  calLastOk = Date.now();
+  calLastOk = Date.now(); calErr = false;
   renderCalendar(); renderEventList();
 }
+/* 할 일 카드 안의 캘린더 일정 — 오늘/내일/이번 주/전체 탭을 따른다.
+   "오늘 뭐 하지"를 한 화면에서 보려는 용도라 읽기 전용이고 S에 넣지 않는다.
+   이미 할 일로 가져온 일정은 아래 '대시보드 할 일'에 뜨므로 eventsOn()으로 뺀다.
+   syncCalendar가 항상 오늘~7일 뒤를 받아 오므로 그 범위 안에서만 보여준다. */
+function calScopeDays(){
+  const t = today();
+  if (scope==="tomorrow") return [addDays(t,1)];
+  let n = 1;
+  if (scope==="week") n = diffDays(t, weekEnd()) + 1;
+  else if (scope==="all") n = 8;
+  const out = [];
+  for (let i=0;i<n;i++) out.push(addDays(t,i));
+  return out;
+}
+function renderCalToday(){
+  const wrap = document.getElementById("calTodayWrap");
+  if (!wrap) return;
+  if (mode()==="off"){ wrap.style.display = "none"; return; }
+  wrap.style.display = "";
+  const t = today(), days = calScopeDays(), multi = days.length > 1;
+  const now = new Date(), nowMin = now.getHours()*60 + now.getMinutes();
+  const rows = [];
+  days.forEach(d=>{
+    eventsOn(d).slice().sort((a,b)=>(a.time||"").localeCompare(b.time||""))
+      .forEach(ev=>rows.push({ d, ev }));
+  });
+  document.getElementById("calTodayLabel").textContent =
+    ({ today:"오늘 일정", tomorrow:"내일 일정", week:"이번 주 남은 일정", all:"앞으로 7일 일정" }[scope] || "일정")
+    + " · Google Calendar";
+  const statEl = document.getElementById("calTodayStatus");
+  if (calErr) statEl.textContent = calLastOk ? "연결 실패 · " + hm(new Date(calLastOk)) + " 기준" : "연결 실패";
+  else statEl.textContent = calLastOk ? rows.length + "건 · 갱신 " + hm(new Date(calLastOk)) : "불러오는 중…";
+
+  const listEl = document.getElementById("calTodayList");
+  if (!rows.length){
+    listEl.innerHTML = '<div class="empty">'+
+      (!calLastOk ? (calErr ? "캘린더 일정을 불러오지 못했습니다." : "…")
+                  : ({ today:"오늘", tomorrow:"내일", week:"이번 주 남은", all:"앞으로 7일간" }[scope] || "")
+                    + " 캘린더 일정이 없습니다.")+'</div>';
+    return;
+  }
+  listEl.innerHTML = rows.map(({d,ev})=>{
+    let past = false;
+    if (d===t && ev.time){
+      const p = ev.time.split(":");
+      past = (parseInt(p[0],10)*60 + parseInt(p[1],10) + (ev.dur||60)) <= nowMin;
+    }
+    const meta = [];
+    if (multi) meta.push('<span class="due">'+(d===t ? "오늘" : shortDate(d)+" "+DOW[new Date(d+"T00:00:00").getDay()])+'</span>');
+    let when = ev.time || "종일";
+    if (ev.time && ev.dur){
+      const p = ev.time.split(":");
+      when += "–"+fmtClock((parseInt(p[0],10)*60 + parseInt(p[1],10) + ev.dur) % 1440);
+    }
+    return '<li class="ce'+(past?" is-past":"")+'">'+
+      '<span class="ce-time">'+when+'</span>'+
+      '<div class="t-body"><div class="t-text">'+esc(ev.title)+'</div>'+
+      (meta.length?'<div class="t-meta">'+meta.join("")+'</div>':"")+'</div></li>';
+  }).join("");
+}
 function renderEventList(){
+  try{ renderCalToday(); }catch(err){ console.error("렌더 오류: renderCalToday", err); }
   const el = document.getElementById("evList"), t = today();
   const taken = importedIds();
   const rows = [];

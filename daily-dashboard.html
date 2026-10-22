@@ -561,6 +561,22 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
   .card,.ghost,.btn{transition:none}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.mnav{backdrop-filter:none;-webkit-backdrop-filter:none}}
+
+/* ── 노동 게시판 ─────────────────────────── */
+.labor-wallet{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;padding:3px 10px;border-radius:var(--r-pill);background:var(--accent-soft);color:var(--accent);font-variant-numeric:tabular-nums}
+.labor-wallet.debt{color:var(--signal)}
+.labor-say{display:flex;gap:10px;align-items:baseline;font-size:13px;line-height:1.55;padding:10px 12px;margin-bottom:6px;border:1px dashed var(--rule);border-radius:var(--r);background:var(--paper)}
+.labor-say b{flex:none;font-size:11.5px;font-weight:600;color:var(--ink2)}
+ul.list li.job,ul.list li.reward,ul.list li.log{align-items:center}
+li.job .pay,li.reward .cost{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--m-rv);flex:none;font-variant-numeric:tabular-nums}
+li.job .btn,li.reward .btn{flex:none}
+li.reward .btn:disabled{opacity:.35;cursor:not-allowed;filter:none}
+li.log .amt{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;flex:none;font-variant-numeric:tabular-nums}
+li.log .amt.plus{color:var(--m-todo)} li.log .amt.minus{color:var(--signal)}
+[data-theme="dark"] li.log .amt.plus{color:var(--accent)}
+.labor-more{font-size:11.5px;color:var(--ink3);padding-top:6px}
+.labor-stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+.labor-cost{width:76px}
 </style>
 
 </head>
@@ -700,6 +716,33 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
         <summary id="doneTodosHead">완료한 할 일</summary>
         <ul class="list" id="doneTodoList"></ul>
       </details>
+    </section>
+
+    <!-- 노동 게시판 -->
+    <section data-tab="today" class="card" id="cardLabor">
+      <h2>노동 게시판 <span class="count" id="laborOpen" aria-live="polite">0</span>
+        <span class="spacer"></span>
+        <span class="labor-wallet" id="laborWallet" title="모은 포인트" aria-live="polite">0 P</span>
+      </h2>
+      <div class="labor-say" id="laborSay"></div>
+      <ul class="list" id="laborList"></ul>
+      <div class="labor-stats">
+        <span class="mini">오늘 번 보수 <b id="laborToday">0 P</b></span>
+        <span class="mini">이번 주 <b id="laborWeek">0 P</b></span>
+      </div>
+      <div class="subhead"><span class="eyebrow">쿠리만쥬 가게 · 포인트로 사는 보상</span></div>
+      <ul class="list" id="laborShop"></ul>
+      <div class="row form-row u-inline-3">
+        <input type="text" id="rewardName" class="grow" placeholder="보상 (예: 유튜브 30분)">
+        <input type="number" id="rewardCost" class="labor-cost" min="1" step="5" placeholder="P" aria-label="가격(P)">
+        <button class="ghost" id="rewardAdd">진열</button>
+      </div>
+      <details class="done-section">
+        <summary id="laborLogHead">정산 내역</summary>
+        <ul class="list" id="laborLog"></ul>
+      </details>
+      <div class="hint">오늘(밀린 것 포함) 할 일이 일감으로 붙습니다. 끝내면 보수가 들어옵니다 — 높음 20P · 보통 10P · 낮음 5P.
+        옵시디언에서 체크한 일도 다음 갱신 때 정산되고, 완료를 풀면 보수도 빠집니다.</div>
     </section>
 
     <!-- 시간 추적 -->
@@ -1835,7 +1878,7 @@ async function fetchVaultTasks(opts){
   renderCalendar();          /* 달력 마감 점에도 반영 */
   renderVaultTasks();
   /* 할 일 수·완료율·내일 할 일 수가 이제 볼트 항목을 포함한다 */
-  renderTodos(); renderClosing(); renderWeek(); updateDashboardSummary();
+  renderTodos(); renderClosing(); renderWeek(); renderLabor(); updateDashboardSummary();
   if (!opts.silent){
     const n = vaultTasks.filter(vtActive).length;
     toast("볼트 할 일 " + n + "개를 불러왔습니다.");
@@ -1898,7 +1941,11 @@ async function vaultToggle(li){
   vaultBase = res.baseModifiedTime;
   vaultAt = new Date();
   renderCalendar(); renderVaultTasks();
-  toast(want ? "'"+task.text+"' 완료로 표시했습니다." : "'"+task.text+"' 완료를 해제했습니다.");
+  /* 브리지가 완료 날짜(✅)를 안 붙인 경우에도 보수가 들어가도록 직접 적는다 */
+  const paid = want && laborCredit(vaultLaborKey(task), task.text, laborPay(task.priority), today());
+  save(); renderLabor();
+  toast(want ? "'"+task.text+"' 완료로 표시했습니다." + (paid ? " · 보수 +"+laborPay(task.priority)+"P" : "")
+             : "'"+task.text+"' 완료를 해제했습니다.");
 
   /* 쓰기가 ok를 받고도 되돌려질 수 있다 — 2026-09-23부터 Tasks.md는 옵시디언
      Google Drive Sync 플러그인이 올리는 사본이고, 플러그인은 로컬 변경을 우선해
@@ -2192,6 +2239,166 @@ document.getElementById("todoTomorrow").addEventListener("click", ()=>{
   document.getElementById("todoDue").value = addDays(today(),1);
   document.getElementById("todoText").focus();
 });
+
+/* ══ 노동 게시판 (2026-10-22) ════════════════════════════
+   먼작귀의 노동 게시판처럼 오늘 할 일을 '일감'으로 붙이고, 끝내면 보수(P)를 준다.
+   일감의 원본은 그대로 Tasks.md·S.todos다 — 여기서 '완료'를 누르면 할 일 카드의
+   체크와 같은 경로(vaultToggle·로컬 토글)를 탄다.
+   보수 장부(S.labor.ledger)는 화면에 보이는 완료 상태에서 거꾸로 맞춘다(laborSync):
+   항목 key 하나당 earn 한 줄 — 옵시디언에서 직접 체크한 일도 다음 갱신 때 들어오고,
+   완료를 풀면 그 줄이 빠진다. Tasks.md에서 지워진 일은 보수를 그대로 남긴다.
+   맞추기만 할 때는 save()를 부르지 않는다 — 데이터를 읽어 온 것만으로 savedAt이
+   올라가면 다른 기기의 더 최신 상태를 덮어쓸 수 있다. 다음 저장 때 함께 실린다. */
+const LABOR_PAY = { high:20, normal:10, low:5 };
+const LABOR_BOARD_MAX = 6;
+const LABOR_SHOP_DEFAULT = [
+  { name:"유튜브 30분", cost:30 }, { name:"좋아하는 간식", cost:50 },
+  { name:"게임 1시간", cost:80 }, { name:"아무것도 안 하는 저녁", cost:200 }
+];
+function laborState(){
+  if (!S.labor) S.labor = { since: today(), ledger: [],
+    shop: LABOR_SHOP_DEFAULT.map(r=>Object.assign({ id:uid() }, r)) };
+  S.labor.ledger = S.labor.ledger || [];
+  S.labor.shop = S.labor.shop || [];
+  S.labor.since = S.labor.since || today();
+  return S.labor;
+}
+function laborPay(priority){ return LABOR_PAY[priority] || LABOR_PAY.normal; }
+function vaultLaborKey(x){ return "v:" + (x.id || (x.text + "|" + (x.due || ""))); }
+function localLaborKey(td){ return "l:" + td.id; }
+function laborCredit(key, text, pts, date){
+  const L = laborState();
+  if (L.ledger.some(e=>e.kind==="earn" && e.key===key)) return false;
+  L.ledger.push({ id:uid(), kind:"earn", key, text, pts, date });
+  return true;
+}
+function laborSync(){
+  const L = laborState();
+  vaultTasks.forEach(x=>{
+    if (x.status==="done" && x.doneOn && x.doneOn >= L.since)
+      laborCredit(vaultLaborKey(x), x.text, laborPay(x.priority), x.doneOn);
+  });
+  S.todos.forEach(td=>{
+    if (td.done && td.doneAt && td.doneAt >= L.since)
+      laborCredit(localLaborKey(td), td.text, laborPay(td.priority), td.doneAt);
+  });
+  /* 완료를 푼 항목만 뺀다 — 못 찾은 항목(지워졌거나 아직 안 불러옴)은 그대로 둔다 */
+  const undone = new Set();
+  vaultTasks.forEach(x=>{ if (x.status==="todo") undone.add(vaultLaborKey(x)); });
+  S.todos.forEach(td=>{ if (!td.done) undone.add(localLaborKey(td)); });
+  L.ledger = L.ledger.filter(e=>!(e.kind==="earn" && undone.has(e.key)));
+}
+function laborBalance(){ return laborState().ledger.reduce((n,e)=>n+e.pts, 0); }
+function laborEarned(from){
+  return laborState().ledger.filter(e=>e.kind==="earn" && e.date>=from).reduce((n,e)=>n+e.pts, 0);
+}
+/* 오늘 붙는 일감: 마감이 오늘이거나 지난, 아직 열린 할 일 */
+function laborJobs(){
+  const t = today(), jobs = [];
+  vaultTasks.forEach(x=>{
+    if (vtActive(x) && x.due && x.due <= t)
+      jobs.push({ src:"v", x, text:x.text, due:x.due, pay:laborPay(x.priority) });
+  });
+  S.todos.forEach(td=>{
+    if (!td.done && (!td.due || td.due <= t))
+      jobs.push({ src:"l", td, text:td.text, due:td.due || t, pay:laborPay(td.priority) });
+  });
+  return jobs.sort((a,b)=> a.due.localeCompare(b.due) || b.pay-a.pay);
+}
+function laborLine(open, earnedToday, balance){
+  if (S.settings.scriptUrl && !vaultAt && !vaultErr) return ["요로이상", "게시판에 일감을 붙이는 중이다…"];
+  if (balance < 0) return ["쿠리만쥬", "외상이 "+(-balance)+"P 있네. 일감 하나 하고 오자."];
+  if (!open && earnedToday) return ["하치와레", "오늘 일감 다 끝! 거봐, 어떻게든 됐잖아."];
+  if (!open) return ["요로이상", "오늘 붙은 일감이 없다. 할 일 카드에 하나 올려 봐라."];
+  if (earnedToday) return ["치이카와", "……해냈다! 남은 일감 "+open+"개."];
+  if (open >= 5) return ["우사기", "야하! 제일 위에 있는 거 하나만 하자!"];
+  return ["요로이상", "일감이다. 하나만 받아 가라."];
+}
+function renderLabor(){
+  if (!document.getElementById("cardLabor")) return;
+  laborSync();
+  const L = laborState(), t = today();
+  const jobs = laborJobs(), balance = laborBalance(), earnedToday = laborEarned(t);
+  document.getElementById("laborOpen").textContent = String(jobs.length);
+  const wallet = document.getElementById("laborWallet");
+  wallet.textContent = balance + " P";
+  wallet.classList.toggle("debt", balance < 0);
+  const say = laborLine(jobs.length, earnedToday, balance);
+  document.getElementById("laborSay").innerHTML = '<b>'+esc(say[0])+'</b><span>'+esc(say[1])+'</span>';
+
+  const shown = jobs.slice(0, LABOR_BOARD_MAX);
+  document.getElementById("laborList").innerHTML = shown.length
+    ? shown.map(j=>{
+        const over = j.due < t;
+        const attrs = j.src==="v"
+          ? ' data-src="v" data-vid="'+esc(j.x.id||"")+'" data-vline="'+j.x.line+'"'
+          : ' data-src="l" data-id="'+esc(j.td.id)+'"';
+        return '<li class="job"'+attrs+'>'+
+          '<div class="t-body"><div class="t-text">'+esc(j.text)+'</div>'+
+          '<div class="t-meta"><span class="due'+(over?" over":"")+'">'+(over ? "밀림 "+shortDate(j.due) : "오늘")+'</span></div></div>'+
+          '<span class="pay">+'+j.pay+'P</span>'+
+          '<button class="btn sm" data-act="ljob">완료</button></li>';
+      }).join("") + (jobs.length > shown.length ? '<div class="labor-more">외 '+(jobs.length-shown.length)+'건은 할 일 카드에 있습니다.</div>' : "")
+    : '<div class="empty">붙어 있는 일감이 없습니다.</div>';
+
+  document.getElementById("laborToday").textContent = earnedToday + " P";
+  document.getElementById("laborWeek").textContent = laborEarned(weekStart()) + " P";
+
+  document.getElementById("laborShop").innerHTML = L.shop.length
+    ? L.shop.map(r=>'<li class="reward" data-id="'+esc(r.id)+'">'+
+        '<div class="t-body"><div class="t-text">'+esc(r.name)+'</div></div>'+
+        '<span class="cost">'+r.cost+'P</span>'+
+        '<button class="btn sm" data-act="lbuy"'+(balance < r.cost ? " disabled" : "")+'>사기</button>'+
+        '<button class="icon-btn" data-act="ldel" title="진열 빼기" aria-label="진열 빼기">'+DEL_X+'</button></li>').join("")
+    : '<div class="empty">진열된 보상이 없습니다. 아래에서 하나 올려 두세요.</div>';
+
+  const log = L.ledger.slice().sort((a,b)=> b.date.localeCompare(a.date)).slice(0, 15);
+  document.getElementById("laborLogHead").textContent = "정산 내역" + (L.ledger.length ? " " + L.ledger.length + "건" : "");
+  document.getElementById("laborLog").innerHTML = log.length
+    ? log.map(e=>'<li class="log"><span class="due">'+shortDate(e.date)+'</span>'+
+        '<div class="t-body"><div class="t-text">'+esc(e.kind==="spend" ? "가게 · "+e.text : e.text)+'</div></div>'+
+        '<span class="amt '+(e.pts>=0?"plus":"minus")+'">'+(e.pts>=0?"+":"")+e.pts+'P</span></li>').join("")
+    : '<div class="empty">아직 정산된 보수가 없습니다.</div>';
+}
+document.getElementById("laborList").addEventListener("click", e=>{
+  const btn = e.target.closest('button[data-act="ljob"]'); if (!btn) return;
+  const li = btn.closest("li");
+  if (li.dataset.src === "v"){ vaultToggle(li); return; }
+  const td = S.todos.find(x=>x.id===li.dataset.id); if (!td) return;
+  td.done = true; td.doneAt = today();
+  save(); renderAll();
+  toast("'"+td.text+"' 완료 · 보수 +"+laborPay(td.priority)+"P");
+});
+document.getElementById("laborShop").addEventListener("click", e=>{
+  const btn = e.target.closest("button[data-act]"); if (!btn) return;
+  const L = laborState();
+  const r = L.shop.find(x=>x.id===btn.closest("li").dataset.id); if (!r) return;
+  if (btn.dataset.act === "lbuy"){
+    if (laborBalance() < r.cost){ toast("포인트가 모자랍니다."); return; }
+    snapUndo(["labor"]);
+    L.ledger.push({ id:uid(), kind:"spend", key:"s:"+r.id, text:r.name, pts:-r.cost, date:today() });
+    save(); renderLabor();
+    offerUndo("쿠리만쥬: '"+r.name+"' 샀다. 푹 쉬자.");
+  } else if (btn.dataset.act === "ldel"){
+    snapUndo(["labor"]);
+    L.shop = L.shop.filter(x=>x.id!==r.id);
+    save(); renderLabor();
+    offerUndo("'"+r.name+"'을(를) 진열에서 뺐습니다.");
+  }
+});
+function addReward(){
+  const nameEl = document.getElementById("rewardName"), costEl = document.getElementById("rewardCost");
+  const name = nameEl.value.trim(), cost = Math.round(Number(costEl.value));
+  if (!name){ toast("보상 이름을 입력하세요."); nameEl.focus(); return; }
+  if (!(cost > 0)){ toast("가격(P)을 1 이상으로 입력하세요."); costEl.focus(); return; }
+  laborState().shop.push({ id:uid(), name, cost });
+  nameEl.value = ""; costEl.value = "";
+  save(); renderLabor();
+}
+document.getElementById("rewardAdd").addEventListener("click", addReward);
+["rewardName","rewardCost"].forEach(id=>document.getElementById(id).addEventListener("keydown", e=>{
+  if (e.key==="Enter") addReward();
+}));
 
 /* ══ 시간 추적 · 과목 ═══════════════════════════════════ */
 function renderSubjects(){
@@ -3518,7 +3725,7 @@ function renderAll(){
     renderHeader, renderCalendar, renderTodos, renderVaultTasks, renderTimetable,
     ()=>barSet("todayBars", today(), today()),
     renderPlans, renderRoutine, renderHabits, renderSleep, renderReviews,
-    renderJournal, renderWeek, renderClosing, renderEventList, updateDashboardSummary
+    renderJournal, renderWeek, renderClosing, renderEventList, renderLabor, updateDashboardSummary
   ];
   steps.forEach(fn=>{
     try{ fn(); }

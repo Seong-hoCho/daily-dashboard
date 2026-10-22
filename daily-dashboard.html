@@ -577,14 +577,39 @@ li.log .amt.plus{color:var(--m-todo)} li.log .amt.minus{color:var(--signal)}
 .labor-more{font-size:11.5px;color:var(--ink3);padding-top:6px}
 .labor-stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
 .labor-cost{width:76px}
-.labor-ava{width:40px;height:40px;flex:none;border-radius:50%;overflow:hidden;display:grid;place-items:center;
+.labor-ava{width:40px;height:40px;flex:none;border-radius:50%;overflow:visible;display:grid;place-items:center;
   background:var(--card);border:1px solid var(--rule);font-size:15px;font-weight:700;color:var(--ink2)}
-.labor-ava img{width:100%;height:100%;object-fit:cover;display:block}
+.labor-ava img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
 .labor-say .who{display:flex;flex-direction:column;gap:1px;min-width:0}
 .labor-chars{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:4px}
 .labor-char{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;color:var(--ink2);text-align:center}
 .labor-char .labor-ava{width:52px;height:52px;font-size:18px}
 .labor-char .row{justify-content:center;gap:4px}
+.labor-say .labor-ava{width:56px;height:56px;overflow:visible;background:var(--accent-soft);border-color:transparent}
+/* 기본 캐릭터(SVG) 움직임 — 전역 prefers-reduced-motion 규칙이 모두 멈춘다 */
+.mascot{width:100%;height:100%;display:block;overflow:visible}
+.mascot *{transform-box:fill-box;transform-origin:center}
+.m-bob{animation:mBob 2.4s ease-in-out infinite}
+.m-hop{animation:mHop 1.6s ease-in-out infinite}
+.m-nod{transform-origin:50% 100%;animation:mNod 3.2s ease-in-out infinite}
+.m-blink{animation:mBlink 4.2s infinite}
+.m-sway{transform-origin:50% 100%;animation:mSway 2.2s ease-in-out infinite}
+.m-ear{transform-origin:50% 100%;animation:mSway 1.6s ease-in-out infinite}
+.m-strum{transform-origin:30% 30%;animation:mStrum .45s ease-in-out infinite alternate}
+.m-note{animation:mRise 2.2s ease-out infinite}
+.m-steam{animation:mRise 2.6s ease-out infinite}
+.m-twinkle{animation:mTwinkle 1.4s ease-in-out infinite}
+.m-flag{transform-origin:0 100%;animation:mSway 1.8s ease-in-out infinite}
+@keyframes mBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes mHop{0%,55%,100%{transform:translateY(0)}25%{transform:translateY(-6px)}}
+@keyframes mNod{0%,70%,100%{transform:rotate(0)}78%{transform:rotate(-5deg)}86%{transform:rotate(3deg)}}
+@keyframes mBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.12)}}
+@keyframes mSway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@keyframes mStrum{from{transform:rotate(-7deg)}to{transform:rotate(5deg)}}
+@keyframes mRise{0%{opacity:0;transform:translateY(4px)}30%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
+@keyframes mTwinkle{0%,100%{transform:scale(.6) rotate(0);opacity:.5}50%{transform:scale(1.15) rotate(20deg);opacity:1}}
+.labor-ava.cheer .mascot,.labor-ava.cheer img{animation:mCheer .8s ease-out 2}
+@keyframes mCheer{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-9px) scale(1.08)}}
 </style>
 
 </head>
@@ -753,7 +778,7 @@ li.log .amt.plus{color:var(--m-todo)} li.log .amt.minus{color:var(--signal)}
         <summary>캐릭터 이미지</summary>
         <div class="labor-chars" id="laborChars"></div>
         <input type="file" id="laborCharFile" accept="image/*" hidden>
-        <div class="hint">고른 이미지는 이 브라우저에만 저장됩니다 — 레포(공개)에도, 기기 간 동기화에도 올라가지 않으므로 기기마다 따로 넣어 주세요.</div>
+        <div class="hint">기본 그림은 이 대시보드용으로 새로 그린 캐릭터입니다. 고른 이미지는 이 브라우저에만 저장됩니다 — 레포(공개)에도, 기기 간 동기화에도 올라가지 않으므로 기기마다 따로 넣어 주세요.</div>
       </details>
       <div class="hint">오늘(밀린 것 포함) 할 일이 일감으로 붙습니다. 끝내면 보수가 들어옵니다 — 높음 20P · 보통 10P · 낮음 5P.
         옵시디언에서 체크한 일도 다음 갱신 때 정산되고, 완료를 풀면 보수도 빠집니다.</div>
@@ -2332,12 +2357,76 @@ function laborCharImages(){
   try{ return JSON.parse(localStorage.getItem(LABOR_CHAR_KEY) || "{}") || {}; }catch(e){ return {}; }
 }
 function laborCharName(key){ return (LABOR_CHARS.find(c=>c.key===key) || {}).name || ""; }
-function laborAvaHtml(key){
+/* 기본 캐릭터 — 이 대시보드용으로 새로 그린 SVG(공식 그림 아님). 역할만 따왔다:
+   갑옷 서기·새싹 든 작은 곰·기타 치는 고양이·뛰는 토끼·한잔하는 밤만주. */
+const M_LINE = 'stroke="#3A3F44" stroke-width="2" stroke-linejoin="round"';
+const M_EYES = (y, l, r)=>'<g class="m-blink"><circle cx="'+l+'" cy="'+y+'" r="2.1" fill="#2B2B2B"/><circle cx="'+r+'" cy="'+y+'" r="2.1" fill="#2B2B2B"/></g>';
+const M_BLUSH = (y, l, r)=>'<ellipse cx="'+l+'" cy="'+y+'" rx="3" ry="1.7" fill="#F7B6C2"/><ellipse cx="'+r+'" cy="'+y+'" rx="3" ry="1.7" fill="#F7B6C2"/>';
+const LABOR_MASCOTS = {
+  yoroi:
+    '<g class="m-nod">'+
+      '<rect x="19" y="42" width="26" height="15" rx="7" fill="#B8C2C8" '+M_LINE+'/>'+
+      '<path d="M14 38 A18 18 0 0 1 50 38 V41 H14Z" fill="#D5DDE2" '+M_LINE+'/>'+
+      '<rect x="19" y="30" width="26" height="6" rx="3" fill="#3A3F44"/>'+
+      '<g class="m-blink"><circle cx="27" cy="33" r="1.4" fill="#F5FFF9"/><circle cx="37" cy="33" r="1.4" fill="#F5FFF9"/></g>'+
+      '<path d="M32 20 V14" stroke="#3A3F44" stroke-width="2"/>'+
+      '<path class="m-flag" d="M32 14 C36 10 41 13 44 10 C42 15 37 15 32 18Z" fill="#E2554F" '+M_LINE+'/>'+
+    '</g>'+
+    '<g class="m-sway"><rect x="46" y="40" width="13" height="16" rx="1.5" fill="#FFF8E1" '+M_LINE+'/>'+
+      '<path d="M49 45H56M49 48.5H56M49 52H53" stroke="#B17A2A" stroke-width="1.4" stroke-linecap="round"/></g>',
+  chiikawa:
+    '<g class="m-bob">'+
+      '<circle cx="20" cy="24" r="6" fill="#FFFFFF" '+M_LINE+'/><circle cx="44" cy="24" r="6" fill="#FFFFFF" '+M_LINE+'/>'+
+      '<ellipse cx="32" cy="39" rx="19" ry="17" fill="#FFFFFF" '+M_LINE+'/>'+
+      M_EYES(37, 25.5, 38.5) + M_BLUSH(42.5, 21.5, 42.5)+
+      '<path d="M30 43 Q32 45 34 43" stroke="#2B2B2B" stroke-width="1.5" fill="none" stroke-linecap="round"/>'+
+    '</g>'+
+    '<g class="m-sway"><path d="M55 57 V46" stroke="#3E9B6B" stroke-width="2" stroke-linecap="round"/>'+
+      '<path d="M55 49 C51 44 47 46 47 48 C50 51 53 50 55 49Z" fill="#6CC28F" stroke="#3E9B6B" stroke-width="1.2"/>'+
+      '<path d="M55 47 C58 41 62 42 62 44 C60 48 57 48 55 47Z" fill="#6CC28F" stroke="#3E9B6B" stroke-width="1.2"/></g>',
+  hachiware:
+    '<g class="m-bob">'+
+      '<path d="M15 31 L18 13 L28 23Z" fill="#C9D3DC" '+M_LINE+'/><path d="M49 31 L46 13 L36 23Z" fill="#C9D3DC" '+M_LINE+'/>'+
+      '<ellipse cx="32" cy="37" rx="19" ry="16" fill="#C9D3DC" '+M_LINE+'/>'+
+      '<path d="M28 22V27M32 21V28M36 22V27" stroke="#8E9BA8" stroke-width="2" stroke-linecap="round"/>'+
+      M_EYES(36, 25.5, 38.5) + M_BLUSH(41.5, 21.5, 42.5)+
+      '<path d="M29 41 Q30.5 42.6 32 41 Q33.5 42.6 35 41" stroke="#2B2B2B" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
+    '</g>'+
+    '<g class="m-strum"><path d="M44 50 L58 34" stroke="#8A5A2B" stroke-width="3" stroke-linecap="round"/>'+
+      '<ellipse cx="44" cy="51" rx="7.5" ry="6.5" fill="#D9A15B" '+M_LINE+'/><circle cx="44" cy="51" r="2" fill="#5A3A1B"/></g>'+
+    '<g class="m-note"><path d="M55 14V22" stroke="#4777B8" stroke-width="1.6"/><path d="M55 14 L59 15.5" stroke="#4777B8" stroke-width="1.6"/>'+
+      '<circle cx="53.4" cy="22" r="2.2" fill="#4777B8"/></g>',
+  usagi:
+    '<g class="m-hop">'+
+      '<g class="m-ear"><ellipse cx="25" cy="15" rx="4.6" ry="11" fill="#FFF3D6" '+M_LINE+'/><ellipse cx="25" cy="16" rx="2" ry="7" fill="#F7B6C2"/></g>'+
+      '<g class="m-ear"><ellipse cx="39" cy="15" rx="4.6" ry="11" fill="#FFF3D6" '+M_LINE+'/><ellipse cx="39" cy="16" rx="2" ry="7" fill="#F7B6C2"/></g>'+
+      '<ellipse cx="32" cy="40" rx="18" ry="15" fill="#FFF3D6" '+M_LINE+'/>'+
+      M_EYES(38, 25.5, 38.5) + M_BLUSH(43, 21.5, 42.5)+
+      '<path d="M28.5 43 Q32 49 35.5 43Z" fill="#E2554F" stroke="#2B2B2B" stroke-width="1.2" stroke-linejoin="round"/>'+
+    '</g>'+
+    '<path class="m-twinkle" d="M54 14 L55.6 18.4 L60 20 L55.6 21.6 L54 26 L52.4 21.6 L48 20 L52.4 18.4Z" fill="#F2C14E"/>',
+  kurimanju:
+    '<g class="m-bob">'+
+      '<path d="M30 20 C45 20 50 31 50 41 C50 51 42 55 30 55 C18 55 10 51 10 41 C10 31 15 20 30 20Z" fill="#E8B672" '+M_LINE+'/>'+
+      '<path d="M12 35 C14 25 21 20 30 20 C39 20 46 25 48 35 C42 31 36 30 30 30 C24 30 18 31 12 35Z" fill="#8A5A2B"/>'+
+      '<path d="M30 20 L28 14 H32Z" fill="#8A5A2B" '+M_LINE+'/>'+
+      '<path d="M21 40 Q24 38 27 40M33 40 Q36 38 39 40" stroke="#2B2B2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>'+
+      M_BLUSH(44, 19.5, 40.5)+
+      '<path d="M28 45 Q30 47 32 45" stroke="#2B2B2B" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
+    '</g>'+
+    '<rect x="47" y="45" width="11" height="11" rx="2" fill="#F5F7F8" '+M_LINE+'/>'+
+    '<path d="M47.5 48H57.5" stroke="#E8B672" stroke-width="3"/>'+
+    '<path class="m-steam" d="M52.5 41 C50.5 38.5 54.5 36.5 52.5 33" stroke="#91A3A0" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
+};
+function laborAvaHtml(key, extra){
   const src = laborCharImages()[key], name = laborCharName(key);
-  return '<span class="labor-ava">' + (src
-    ? '<img src="'+esc(src)+'" alt="'+esc(name)+'">'
-    : '<span aria-hidden="true">'+esc(name.charAt(0))+'</span>') + '</span>';
+  const art = src ? '<img src="'+esc(src)+'" alt="'+esc(name)+'">'
+    : LABOR_MASCOTS[key] ? '<svg class="mascot" viewBox="0 0 64 64" role="img" aria-label="'+esc(name)+'">'+LABOR_MASCOTS[key]+'</svg>'
+    : '<span aria-hidden="true">'+esc(name.charAt(0))+'</span>';
+  return '<span class="labor-ava'+(extra ? " "+extra : "")+'">'+art+'</span>';
 }
+/* 오늘 번 보수가 늘었으면 말하는 캐릭터가 한 번 뛴다. 첫 렌더(null)에는 뛰지 않는다. */
+let laborLastEarned = null;
 function laborLine(open, earnedToday, balance){
   if (S.settings.scriptUrl && !vaultAt && !vaultErr) return ["yoroi", "게시판에 일감을 붙이는 중이다…"];
   if (balance < 0) return ["kurimanju", "외상이 "+(-balance)+"P 있네. 일감 하나 하고 오자."];
@@ -2351,7 +2440,7 @@ function renderLaborChars(){
   const imgs = laborCharImages();
   document.getElementById("laborChars").innerHTML = LABOR_CHARS.map(c=>
     '<div class="labor-char" data-key="'+c.key+'">'+laborAvaHtml(c.key)+'<span>'+esc(c.name)+'</span>'+
-    '<div class="row"><button class="ghost sm" data-act="cpick">'+(imgs[c.key] ? "바꾸기" : "고르기")+'</button>'+
+    '<div class="row"><button class="ghost sm" data-act="cpick">'+(imgs[c.key] ? "바꾸기" : "내 이미지")+'</button>'+
     (imgs[c.key] ? '<button class="icon-btn" data-act="cdel" title="이미지 지우기" aria-label="'+esc(c.name)+' 이미지 지우기">'+DEL_X+'</button>' : "")+
     '</div></div>').join("");
 }
@@ -2407,7 +2496,9 @@ function renderLabor(){
   wallet.textContent = balance + " P";
   wallet.classList.toggle("debt", balance < 0);
   const say = laborLine(jobs.length, earnedToday, balance);
-  document.getElementById("laborSay").innerHTML = laborAvaHtml(say[0])+
+  const cheer = laborLastEarned !== null && earnedToday > laborLastEarned;
+  laborLastEarned = earnedToday;
+  document.getElementById("laborSay").innerHTML = laborAvaHtml(say[0], cheer ? "cheer" : "")+
     '<div class="who"><b>'+esc(laborCharName(say[0]))+'</b><span>'+esc(say[1])+'</span></div>';
   renderLaborChars();
 

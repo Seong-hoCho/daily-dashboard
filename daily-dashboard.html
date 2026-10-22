@@ -565,7 +565,7 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
 /* ── 노동 게시판 ─────────────────────────── */
 .labor-wallet{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;padding:3px 10px;border-radius:var(--r-pill);background:var(--accent-soft);color:var(--accent);font-variant-numeric:tabular-nums}
 .labor-wallet.debt{color:var(--signal)}
-.labor-say{display:flex;gap:10px;align-items:baseline;font-size:13px;line-height:1.55;padding:10px 12px;margin-bottom:6px;border:1px dashed var(--rule);border-radius:var(--r);background:var(--paper)}
+.labor-say{display:flex;gap:10px;align-items:center;font-size:13px;line-height:1.55;padding:10px 12px;margin-bottom:6px;border:1px dashed var(--rule);border-radius:var(--r);background:var(--paper)}
 .labor-say b{flex:none;font-size:11.5px;font-weight:600;color:var(--ink2)}
 ul.list li.job,ul.list li.reward,ul.list li.log{align-items:center}
 li.job .pay,li.reward .cost{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--m-rv);flex:none;font-variant-numeric:tabular-nums}
@@ -577,6 +577,14 @@ li.log .amt.plus{color:var(--m-todo)} li.log .amt.minus{color:var(--signal)}
 .labor-more{font-size:11.5px;color:var(--ink3);padding-top:6px}
 .labor-stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
 .labor-cost{width:76px}
+.labor-ava{width:40px;height:40px;flex:none;border-radius:50%;overflow:hidden;display:grid;place-items:center;
+  background:var(--card);border:1px solid var(--rule);font-size:15px;font-weight:700;color:var(--ink2)}
+.labor-ava img{width:100%;height:100%;object-fit:cover;display:block}
+.labor-say .who{display:flex;flex-direction:column;gap:1px;min-width:0}
+.labor-chars{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:4px}
+.labor-char{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;color:var(--ink2);text-align:center}
+.labor-char .labor-ava{width:52px;height:52px;font-size:18px}
+.labor-char .row{justify-content:center;gap:4px}
 </style>
 
 </head>
@@ -740,6 +748,12 @@ li.log .amt.plus{color:var(--m-todo)} li.log .amt.minus{color:var(--signal)}
       <details class="done-section">
         <summary id="laborLogHead">정산 내역</summary>
         <ul class="list" id="laborLog"></ul>
+      </details>
+      <details class="done-section">
+        <summary>캐릭터 이미지</summary>
+        <div class="labor-chars" id="laborChars"></div>
+        <input type="file" id="laborCharFile" accept="image/*" hidden>
+        <div class="hint">고른 이미지는 이 브라우저에만 저장됩니다 — 레포(공개)에도, 기기 간 동기화에도 올라가지 않으므로 기기마다 따로 넣어 주세요.</div>
       </details>
       <div class="hint">오늘(밀린 것 포함) 할 일이 일감으로 붙습니다. 끝내면 보수가 들어옵니다 — 높음 20P · 보통 10P · 낮음 5P.
         옵시디언에서 체크한 일도 다음 갱신 때 정산되고, 완료를 풀면 보수도 빠집니다.</div>
@@ -2305,15 +2319,84 @@ function laborJobs(){
   });
   return jobs.sort((a,b)=> a.due.localeCompare(b.due) || b.pay-a.pay);
 }
-function laborLine(open, earnedToday, balance){
-  if (S.settings.scriptUrl && !vaultAt && !vaultErr) return ["요로이상", "게시판에 일감을 붙이는 중이다…"];
-  if (balance < 0) return ["쿠리만쥬", "외상이 "+(-balance)+"P 있네. 일감 하나 하고 오자."];
-  if (!open && earnedToday) return ["하치와레", "오늘 일감 다 끝! 거봐, 어떻게든 됐잖아."];
-  if (!open) return ["요로이상", "오늘 붙은 일감이 없다. 할 일 카드에 하나 올려 봐라."];
-  if (earnedToday) return ["치이카와", "……해냈다! 남은 일감 "+open+"개."];
-  if (open >= 5) return ["우사기", "야하! 제일 위에 있는 거 하나만 하자!"];
-  return ["요로이상", "일감이다. 하나만 받아 가라."];
+/* 캐릭터 이미지는 사용자가 고른 파일을 128px로 줄여 별도 키(LABOR_CHAR_KEY)에 둔다.
+   레포가 공개라 공식 이미지를 커밋하지 않고, S에 넣지 않아 동기화(원격 저장)도 부풀리지 않는다. */
+const LABOR_CHARS = [
+  { key:"yoroi", name:"요로이상" }, { key:"chiikawa", name:"치이카와" },
+  { key:"hachiware", name:"하치와레" }, { key:"usagi", name:"우사기" },
+  { key:"kurimanju", name:"쿠리만쥬" }
+];
+const LABOR_CHAR_KEY = "dd-labor-chars";
+let laborCharPick = null;   /* 파일 선택 창을 연 캐릭터 key */
+function laborCharImages(){
+  try{ return JSON.parse(localStorage.getItem(LABOR_CHAR_KEY) || "{}") || {}; }catch(e){ return {}; }
 }
+function laborCharName(key){ return (LABOR_CHARS.find(c=>c.key===key) || {}).name || ""; }
+function laborAvaHtml(key){
+  const src = laborCharImages()[key], name = laborCharName(key);
+  return '<span class="labor-ava">' + (src
+    ? '<img src="'+esc(src)+'" alt="'+esc(name)+'">'
+    : '<span aria-hidden="true">'+esc(name.charAt(0))+'</span>') + '</span>';
+}
+function laborLine(open, earnedToday, balance){
+  if (S.settings.scriptUrl && !vaultAt && !vaultErr) return ["yoroi", "게시판에 일감을 붙이는 중이다…"];
+  if (balance < 0) return ["kurimanju", "외상이 "+(-balance)+"P 있네. 일감 하나 하고 오자."];
+  if (!open && earnedToday) return ["hachiware", "오늘 일감 다 끝! 거봐, 어떻게든 됐잖아."];
+  if (!open) return ["yoroi", "오늘 붙은 일감이 없다. 할 일 카드에 하나 올려 봐라."];
+  if (earnedToday) return ["chiikawa", "……해냈다! 남은 일감 "+open+"개."];
+  if (open >= 5) return ["usagi", "야하! 제일 위에 있는 거 하나만 하자!"];
+  return ["yoroi", "일감이다. 하나만 받아 가라."];
+}
+function renderLaborChars(){
+  const imgs = laborCharImages();
+  document.getElementById("laborChars").innerHTML = LABOR_CHARS.map(c=>
+    '<div class="labor-char" data-key="'+c.key+'">'+laborAvaHtml(c.key)+'<span>'+esc(c.name)+'</span>'+
+    '<div class="row"><button class="ghost sm" data-act="cpick">'+(imgs[c.key] ? "바꾸기" : "고르기")+'</button>'+
+    (imgs[c.key] ? '<button class="icon-btn" data-act="cdel" title="이미지 지우기" aria-label="'+esc(c.name)+' 이미지 지우기">'+DEL_X+'</button>' : "")+
+    '</div></div>').join("");
+}
+/* 정사각형으로 가운데를 잘라 128px로 줄인다 — 원본 그대로 두면 localStorage(약 5MB)가 금방 찬다 */
+function laborShrinkImage(file){
+  return new Promise((resolve, reject)=>{
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = ()=>{
+      const side = Math.min(img.naturalWidth, img.naturalHeight), N = 128;
+      const cv = document.createElement("canvas"); cv.width = cv.height = N;
+      cv.getContext("2d").drawImage(img, (img.naturalWidth-side)/2, (img.naturalHeight-side)/2, side, side, 0, 0, N, N);
+      URL.revokeObjectURL(url);
+      let out = cv.toDataURL("image/webp", 0.9);
+      if (out.indexOf("data:image/webp") !== 0) out = cv.toDataURL("image/png");
+      resolve(out);
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error("이미지를 읽지 못했습니다")); };
+    img.src = url;
+  });
+}
+function laborSaveCharImages(imgs){
+  try{ localStorage.setItem(LABOR_CHAR_KEY, JSON.stringify(imgs)); return true; }
+  catch(e){ toast("이미지를 저장하지 못했습니다 — 브라우저 저장 공간을 확인해 주세요."); return false; }
+}
+document.getElementById("laborChars").addEventListener("click", e=>{
+  const btn = e.target.closest("button[data-act]"); if (!btn) return;
+  const key = btn.closest(".labor-char").dataset.key;
+  if (btn.dataset.act === "cpick"){
+    laborCharPick = key;
+    document.getElementById("laborCharFile").click();
+  } else if (btn.dataset.act === "cdel"){
+    const imgs = laborCharImages(); delete imgs[key];
+    if (laborSaveCharImages(imgs)) renderLabor();
+  }
+});
+document.getElementById("laborCharFile").addEventListener("change", async e=>{
+  const file = e.target.files && e.target.files[0], key = laborCharPick;
+  e.target.value = "";
+  if (!file || !key) return;
+  try{
+    const imgs = laborCharImages();
+    imgs[key] = await laborShrinkImage(file);
+    if (laborSaveCharImages(imgs)){ renderLabor(); toast(laborCharName(key)+" 이미지를 넣었습니다."); }
+  }catch(err){ toast(err.message); }
+});
 function renderLabor(){
   if (!document.getElementById("cardLabor")) return;
   laborSync();
@@ -2324,7 +2407,9 @@ function renderLabor(){
   wallet.textContent = balance + " P";
   wallet.classList.toggle("debt", balance < 0);
   const say = laborLine(jobs.length, earnedToday, balance);
-  document.getElementById("laborSay").innerHTML = '<b>'+esc(say[0])+'</b><span>'+esc(say[1])+'</span>';
+  document.getElementById("laborSay").innerHTML = laborAvaHtml(say[0])+
+    '<div class="who"><b>'+esc(laborCharName(say[0]))+'</b><span>'+esc(say[1])+'</span></div>';
+  renderLaborChars();
 
   const shown = jobs.slice(0, LABOR_BOARD_MAX);
   document.getElementById("laborList").innerHTML = shown.length

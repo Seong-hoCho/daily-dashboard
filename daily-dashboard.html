@@ -1,6 +1,5 @@
 <!doctype html>
 <!-- 개인 대시보드 · 달력 / 할 일 / 시간 추적 / 습관 / 수면 / 기록 / 복습
-     2026-09-16: 30일 테이프·공채 카드·주간 목표시간 제거, 모바일 하단 탭·터치 영역·삭제 되돌리기 추가
      구글 캘린더 양방향 연동: ① Apps Script 브리지(콘솔 불필요) ② OAuth 직접 연동 -->
 
 <html lang="ko">
@@ -79,7 +78,6 @@ header.top{padding:26px 0 14px;display:flex;align-items:flex-start;gap:16px;flex
 .card>h2 .count{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--ink3);border:1px solid var(--rule);border-radius:20px;padding:1px 7px;font-weight:500}
 .card>h2 .count.due{color:var(--signal);border-color:var(--signal)}
 .card>h2 .spacer{margin-left:auto}
-.garden-link{font-size:12px;font-weight:500;color:var(--ink2);text-decoration:none;border:1px solid var(--rule);border-radius:20px;padding:3px 10px}.garden-link:hover{color:var(--ink);border-color:var(--ink3)}
 .card.wide{grid-column:1 / -1}
 .subhead{border-top:1px solid var(--rule2);margin:16px 0 11px;padding-top:11px}
 
@@ -547,7 +545,7 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.mnav{backdrop-filter:none;-webkit-backdrop-filter:none}}
 
-/* ── 목표 카드 (2026-10-24) ───────────────────
+/* ── 목표 카드 ───────────────────
    지표 색은 노트 '지표' 표의 순서로 고정된다(칩을 끄고 켜도 색이 바뀌지 않는다).
    라이트·다크 단계는 각 표면(#FFFFFF / #122222)에서 따로 검증했다(인접 쌍 CVD ΔE ≥ 8).
    색만으로 구분하지 않도록 선 끝 라벨·점선(근거 약함)·표 보기를 같이 쓴다. */
@@ -559,7 +557,7 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
 #cardGoals[hidden]{display:none}
 .goal-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .goal-tiles>.empty{grid-column:1 / -1}
-/* 성실성 타일 (2026-10-25) — 확률에 직접 더하지 않는 외부 요인. 이 기기의 습관·수면 기록으로만 계산 */
+/* 성실성 타일 — 확률에 직접 더하지 않는 외부 요인. 이 기기의 습관·수면 기록으로만 계산 */
 .goal-dil{margin-top:10px}
 .goal-dil .gt-bar{height:5px;border-radius:3px;background:var(--rule);margin-top:4px;flex-basis:100%;overflow:hidden}
 .goal-dil .gt-bar>i{display:block;height:100%;background:var(--ink2)}
@@ -592,6 +590,9 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
 .g-lab{font:600 11px "IBM Plex Sans KR",sans-serif;fill:var(--ink)}
 .g-today{stroke:var(--ink3);stroke-width:1;stroke-dasharray:3 3}
 .g-goal{stroke:var(--ink2);stroke-width:1.5}
+/* 지표별 달성 예상 시점 — 확률판 '지표' 표의 '예상' 칸. 그 지표 색으로 희미하게 */
+.g-exp{stroke-width:1.5;stroke-opacity:.38;stroke-dasharray:2 3}
+.g-expl{font:500 10px "IBM Plex Sans KR",sans-serif;fill-opacity:.85}
 .g-hit{fill:transparent;cursor:pointer;outline:none}
 .g-hit:focus-visible{stroke:var(--accent);stroke-width:2}
 .goal-table{margin-top:8px;font-size:12px}
@@ -619,7 +620,7 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
   .gchip{min-height:40px;padding:6px 12px}
 }
 
-/* ── 시간 추적 (2026-10-24 개편) ───────────────────────── */
+/* ── 시간 추적 ───────────────────────── */
 .tr-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
 .tr-main{display:flex;flex-direction:column;gap:10px;min-width:0}
 .tr-side>.subhead:first-child{border-top:none;margin-top:0;padding-top:0}
@@ -740,7 +741,7 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
       </div>
     </section>
 
-    <!-- 목표 카드 (2026-10-24) — 볼트 노트의 확률 표를 브리지 getGoals로 읽기만 한다.
+    <!-- 목표 카드 — 볼트 노트의 확률 표를 브리지 getGoals로 읽기만 한다.
          공개 저장소라 카드 문구는 노트의 '카드 설정'에서 받는다. 브리지가 없으면 숨긴다 -->
     <section data-tab="look" class="card wide" id="cardGoals" hidden>
       <h2><span id="goalsTitle">목표</span> <span class="spacer"></span>
@@ -856,7 +857,7 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
       </details>
     </section>
 
-    <!-- 시간 추적 (2026-10-24 개편) — 기록 시작/종료 · 포모도로 · 과목·할 일은 Tasks.md에서 고르거나 직접 입력 -->
+    <!-- 시간 추적 — 기록 시작/종료 · 포모도로 · 과목·할 일은 Tasks.md에서 고르거나 직접 입력 -->
     <section data-tab="study" class="card wide" id="cardTime">
       <h2>시간 추적 <span class="spacer"></span>
         <span class="eyebrow" id="trToday" aria-live="polite">오늘 00:00</span>
@@ -906,7 +907,7 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
 
     <!-- 습관 -->
     <section data-tab="today" class="card">
-      <h2>습관 <span class="count" id="habitCount">0</span><span class="spacer"></span><a class="garden-link" href="/habit-sprout/" title="습관 기록으로 자라는 정원 게임">정원 ↗</a></h2>
+      <h2>습관 <span class="count" id="habitCount">0</span></h2>
       <div class="row">
         <input type="text" id="habitName" class="grow" placeholder="습관 이름 (예: 기상 7시)">
         <button class="btn" id="habitAdd">추가</button>
@@ -1216,7 +1217,7 @@ function save(){
    안전 원칙: 원격을 못 읽었거나(네트워크 오류 등) 로컬에 실제 데이터가
    없을 때는 절대로 원격을 덮어쓰지 않는다 — 새 기기에서 접속했을 때
    빈 데이터가 기존 데이터를 지워버리는 사고를 막기 위함. */
-/* ══ 브리지 공용 호출 (2026-09-23) ══════════════════════
+/* ══ 브리지 공용 호출 ══════════════════════
    세 곳(stateRequest·vaultRequest·scriptCall)이 fetch를 따로 부르던 것을 하나로 모은다.
    - 타임아웃: Apps Script는 콜드 스타트가 수 초~십수 초 걸리고, 모바일 네트워크가
      끊기면 fetch가 끝나지 않아 "확인 중…"에서 멈춰 있었다 → 20초 뒤 실패로 처리.
@@ -1832,10 +1833,9 @@ function vtActive(x){ return x.status === "todo"; }
 /* 볼트 항목의 기준일 — 마감(📅)이 있으면 마감, 없으면 예정(⏳). 시작일(🛫)만 있으면 날짜 없음 */
 function vtDate(x){ return x.due || x.scheduled || null; }
 
-/* 볼트 섹션도 위쪽 오늘/내일/이번 주 탭을 따른다 (2026-10-24 변경).
-   09-19에는 "다음 마감이 언제인지"가 사라질까 봐 열린 항목을 전부 보였는데,
-   Tasks.md가 길어져 목록이 너무 길어졌다. 그 걱정은 목록 아래의 범위 밖 안내 줄
-   (남은 항목 수 · 다음 마감)이 대신 맡는다.
+/* 볼트 섹션도 위쪽 오늘/내일/이번 주 탭을 따른다. 열린 항목을 전부 보이면 목록이
+   너무 길어진다. "다음 마감이 언제인지"는 목록 아래의 범위 밖 안내 줄
+   (남은 항목 수 · 다음 마감)이 맡는다.
    오늘 = 기준일이 오늘이거나 지난 것, 내일 = 내일, 이번 주 = 토요일까지(지난 것 포함),
    전체 = 날짜 없는 항목과 완료·취소까지 전부. */
 function vtInScope(x){
@@ -1936,7 +1936,7 @@ async function vaultRequest(payload){
   return (data && data.network) ? null : data;   /* 네트워크 실패만 null — 기존 계약 유지 */
 }
 
-/* 할 일을 적는 곳도 Tasks.md 하나로 모은다(2026-10-11). 대시보드 입력창은
+/* 할 일을 적는 곳도 Tasks.md 하나로 모은다. 대시보드 입력창은
    브리지 applyTasks의 add로 Tasks.md에 직접 쓰고, S.todos에는 넣지 않는다.
    섹션은 Tasks.md에 이미 있는 ## 제목이어야 한다 — 브리지는 섹션을 만들지 않는다. */
 const VAULT_DEFAULT_SECTION = "일반";
@@ -2007,7 +2007,7 @@ function vaultOn(d){ return vaultTasks.filter(x=>x.due === d); }
 
 document.getElementById("vaultRefresh").addEventListener("click", ()=>fetchVaultTasks());
 
-/* ══ 목표 카드 (2026-10-24) ═══════════════════════════════
+/* ══ 목표 카드 ═══════════════════════════════
    볼트 노트의 '지표'·'확률 시계열'·'카드 설정' 표를 브리지 getGoals(형식 2)가 JSON으로
    주고, 대시보드는 읽기만 한다. 이 파일은 공개 저장소에 있으므로 카드에 보이는 문구
    (제목·지표 이름·묶음·기간·표시 지점·설명)는 전부 노트에서 받고 코드에는 두지 않는다.
@@ -2240,7 +2240,7 @@ function renderGoalTiles(by){
     return '<div class="gt-row"><span class="gt-sub" title="'+esc(m.name)+'">'+esc(goalShort(m))+'</span>'+
       '<span class="gt-v">'+goalRange(cur)+'</span>'+
       '<span class="gt-d" title="직전 값 대비, 하한·상한의 중앙값 기준">'+goalDelta(prev, cur)+'</span>'+
-      '<span class="gt-m">'+(goalRest(m) ? esc(goalRest(m))+" · " : "")+goalDate(cur.date)+(cur.milestone ? " · "+esc(cur.milestone) : "")+'</span></div>';
+      '<span class="gt-m">'+(goalRest(m) ? esc(goalRest(m))+" · " : "")+(m.expect ? "예상 "+m.expect.slice(0,7)+" · " : "")+goalDate(cur.date)+(cur.milestone ? " · "+esc(cur.milestone) : "")+'</span></div>';
   };
   document.getElementById("goalTiles").innerHTML = groups.map(g=>{
     const weak = g.ms.filter(goalWeak).map(m=>m.note);
@@ -2255,7 +2255,7 @@ function goalRest(m){
   if (!m.group || m.name.indexOf(m.group) !== 0) return "";
   return m.name.slice(m.group.length).replace(/^[\s—–\-·:|]+/, "").trim();
 }
-/* 짧은 이름 풀이 (2026-10-24) — 그래프 라벨·칩은 짧은 이름만 쓰므로, 대시보드만 보고도
+/* 짧은 이름 풀이 — 그래프 라벨·칩은 짧은 이름만 쓰므로, 대시보드만 보고도
    무엇인지 알 수 있게 노트 '지표' 표의 이름과 비고를 그대로 보여 준다 */
 function renderGoalLegend(){
   const ms = goalsData.metrics.filter(m=>goalShort(m) !== m.name);
@@ -2299,6 +2299,13 @@ function renderGoalChart(by, cfg){
   });
   out.push('<line class="g-goal" x1="'+R+'" x2="'+R+'" y1="'+(T-8)+'" y2="'+B+'"/><text class="g-axl" x="'+R+'" y="'+(T-12)+'" text-anchor="end">'+esc(cfg.endLabel)+'</text>');
   out.push('<line class="g-today" x1="'+xe+'" x2="'+xe+'" y1="'+(T-8)+'" y2="'+B+'"/><text class="g-axl" x="'+xe+'" y="'+(T-12)+'" text-anchor="'+(xe > R-140 ? "end" : "start")+'">오늘</text>');
+  /* 달성 예상 시점 — 그래프에 켠 지표만, 기간 안에 있을 때만. 라벨은 선을 따라 세로로 써서 서로 덜 겹친다 */
+  ms.forEach(m=>{
+    if (!m.expect || m.expect < cfg.start || m.expect > cfg.end) return;
+    const x = X(m.expect), c = goalColor(m.key);
+    out.push('<line class="g-exp" x1="'+x+'" x2="'+x+'" y1="'+T+'" y2="'+B+'" stroke="'+c+'"><title>'+esc(goalShort(m))+' 달성 예상 '+m.expect.slice(0,7)+'</title></line>'+
+      '<text class="g-expl" fill="'+c+'" transform="translate('+(x-3)+','+(B-4)+') rotate(-90)">'+esc(goalShort(m))+' '+m.expect.slice(2,7).replace("-",".")+'</text>');
+  });
 
   const bands = [], lines = [], dots = [], hits = [], labs = [];
   ms.forEach(m=>{
@@ -2547,7 +2554,7 @@ async function vaultToggle(li){
   renderCalendar(); renderVaultTasks();
   toast(want ? "'"+task.text+"' 완료로 표시했습니다." : "'"+task.text+"' 완료를 해제했습니다.");
 
-  /* 쓰기가 ok를 받고도 되돌려질 수 있다 — 2026-09-23부터 Tasks.md는 옵시디언
+  /* 쓰기가 ok를 받고도 되돌려질 수 있다 — Tasks.md는 옵시디언
      Google Drive Sync 플러그인이 올리는 사본이고, 플러그인은 로컬 변경을 우선해
      옵시디언에서 고친 내용이 올라오면 이쪽 변경을 덮어쓴다.
      잠시 뒤 다시 읽어 실제로 남았는지 확인한다. */
@@ -2580,7 +2587,7 @@ document.getElementById("vaultList").addEventListener("click", e=>{
 });
 
 /* ── 볼트 항목 수정 ──────────────────────────────────────
-   위쪽 입력 폼을 그대로 편집 폼으로 쓴다(2026-10-24에 없앤 공부 계획 카드의 '수정'과 같은 방식).
+   위쪽 입력 폼을 그대로 편집 폼으로 쓴다.
    브리지 applyTasks의 edit(v12)가 그 줄만 다시 쓴다. 섹션과 우선순위는
    사용자가 실제로 바꿨을 때만 보낸다 — 화면에 없는 값(### 하위 구분,
    중간 우선순위 🔼)을 건드리지 않기 위함. */
@@ -2743,7 +2750,7 @@ document.getElementById("vaultMore").addEventListener("click", e=>{
   if (!e.target.closest('[data-act="vall"]')) return;
   const all = document.querySelector('.tab[data-scope="all"]'); if (all) all.click();
 });
-/* 입력창 하나가 원본 두 곳으로 갈라 보낸다(2026-09-16 분담 그대로):
+/* 입력창 하나가 원본 두 곳으로 갈라 보낸다:
    시간이 있으면 → 구글 캘린더 일정, 없으면 → Tasks.md.
    브리지(웹 앱 URL)가 없을 때만 예전처럼 대시보드 안(S.todos)에 둔다. */
 let todoBusy = false;
@@ -2844,7 +2851,7 @@ document.getElementById("todoTomorrow").addEventListener("click", ()=>{
   document.getElementById("todoText").focus();
 });
 
-/* ══ 시간 추적 (2026-10-24 개편) ═══════════════════════════
+/* ══ 시간 추적 ═══════════════════════════
    공부 계획 카드와 함께 등록 과목(S.subjects)을 없앴다. 과목·할 일은 글자로 기록에
    붙이고, 후보는 Tasks.md의 미완료 항목(과목 = 바로 위 '### ' 제목, 없으면 '## ' 섹션)과
    최근 기록에서 가져온다. 옛 기록의 subjectId는 S.subjects에서 이름만 찾아 보여 준다.
@@ -3221,7 +3228,7 @@ function barSet(elId, from, to){
     '<div class="val">'+fmtClock(x.min)+'</div></div>').join("");
 }
 
-/* ══ 공부 계획 → Tasks.md (2026-10-24) ══════════════════════
+/* ══ 공부 계획 → Tasks.md ══════════════════════
    공부 계획 카드를 없애고 계획도 Tasks.md에서 관리한다. 이 기기에 남은 진행 중 계획은
    할 일 카드의 안내 줄에서 한 번에 옮긴다. 옮긴 계획은 지우지 않고 migratedOn만 붙인다
    (JSON 내보내기에 남는다). 보류·완료한 계획은 옮기지 않는다. */
@@ -4105,7 +4112,7 @@ function updateDashboardSummary(){
   const close = closeDoneN + "/5";
   /* 지난 마감일도 계속 '임박'으로 세던 문제 — 하한(오늘 이후)을 추가했다 */
   const nearDeadlines=S.deadlines.filter(x=>x.date>=t && x.date<=addDays(t,7)).length;
-  /* 공부 탭 배지 — 오늘 복습할 질문 수 (공부 계획 카드는 2026-10-24에 없앴다) */
+  /* 공부 탭 배지 — 오늘 복습할 질문 수 */
   const reviewPlans=S.reviews.filter(x=>x.nextDue<=t).length;
   const values={sumClosing:close,sumTodos:String(activeTodos),sumStudy:fmtClock(studyMin),sumReview:String(dueReviews)};
   Object.entries(values).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=v;});
@@ -4192,10 +4199,8 @@ function renderAll(){
     if (document.visibilityState === "visible") refreshRemote("resume");
   });
   window.addEventListener("online", ()=>{ lastRefresh = 0; refreshRemote("resume"); });
-  /* 같은 출처의 다른 탭(습관 정원 게임 habit-sprout/ 등)이 저장소를 바꾸면 따라간다 (2026-09-23).
-     더 최신(savedAt)일 때만 채택 — 이 탭에서 방금 고친 내용이 더 최신이면 그대로 둔다.
-     게임은 원격을 먼저 읽고 합친 뒤 올리므로, 그 savedAt을 기준값으로 삼아
-     "다른 기기의 변경 감지"가 잘못 뜨지 않게 한다. */
+  /* 같은 브라우저의 다른 탭이 저장소를 바꾸면 따라간다. 더 최신(savedAt)일 때만 채택한다 —
+     이 탭에서 방금 고친 내용이 더 최신이면 그대로 둔다. */
   window.addEventListener("storage", e=>{
     if (e.key !== KEY || !e.newValue) return;
     let next; try{ next = JSON.parse(e.newValue); }catch(err){ return; }

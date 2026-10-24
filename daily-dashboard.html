@@ -561,6 +561,65 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
   .card,.ghost,.btn{transition:none}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.mnav{backdrop-filter:none;-webkit-backdrop-filter:none}}
+
+/* ── 목표 카드 (2026-10-24) ───────────────────
+   지표 색은 노트 '지표' 표의 순서로 고정된다(칩을 끄고 켜도 색이 바뀌지 않는다).
+   라이트·다크 단계는 각 표면(#FFFFFF / #122222)에서 따로 검증했다(인접 쌍 CVD ΔE ≥ 8).
+   색만으로 구분하지 않도록 선 끝 라벨·점선(근거 약함)·표 보기를 같이 쓴다. */
+#cardGoals{--g1:#2a78d6;--g2:#eb6834;--g3:#1baf7a;--g4:#eda100;--g5:#e87ba4;--g6:#6250d6;--g0:#91A3A0}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) #cardGoals{--g1:#3987e5;--g2:#d95926;--g3:#199e70;--g4:#c98500;--g5:#d55181;--g6:#9085e9;--g0:#718781}
+}
+[data-theme="dark"] #cardGoals{--g1:#3987e5;--g2:#d95926;--g3:#199e70;--g4:#c98500;--g5:#d55181;--g6:#9085e9;--g0:#718781}
+#cardGoals[hidden]{display:none}
+.goal-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.goal-tiles>.empty{grid-column:1 / -1}
+.goal-tile{background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:12px 14px}
+.goal-tile .gt-h{font-size:12px;font-weight:600;color:var(--ink2);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.goal-tile .gt-h .mini{font-weight:400}
+.gt-row{display:flex;align-items:baseline;gap:4px 10px;flex-wrap:wrap;margin-top:8px}
+.gt-sub{font-size:12px;color:var(--ink2);min-width:70px}
+.gt-v{font:500 22px/1.15 "IBM Plex Mono",monospace;letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.gt-d{font:500 12px/1.4 "IBM Plex Mono",monospace;color:var(--ink2)}
+.gt-m{font-size:11.5px;color:var(--ink3);flex-basis:100%}
+.goal-chips{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 6px}
+.gchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);background:var(--card);border-radius:999px;padding:5px 11px;font-size:12px;color:var(--ink3)}
+.gchip[aria-pressed="true"]{border-color:var(--ink3);color:var(--ink);background:var(--paper)}
+.gchip[aria-pressed="false"] svg{opacity:.45}
+.gchip .weak{font-size:10.5px;color:var(--ink3)}
+.goal-chart svg,.goal-strip svg{display:block;width:100%;height:auto;overflow:visible}
+.g-grid{stroke:var(--rule2);stroke-width:1}
+.g-base{stroke:var(--rule);stroke-width:1}
+.g-ax{font:10px "IBM Plex Mono",monospace;fill:var(--ink3)}
+.g-axl{font:500 10.5px "IBM Plex Sans KR",sans-serif;fill:var(--ink2)}
+.g-lab{font:600 11px "IBM Plex Sans KR",sans-serif;fill:var(--ink)}
+.g-today{stroke:var(--ink3);stroke-width:1;stroke-dasharray:3 3}
+.g-goal{stroke:var(--ink2);stroke-width:1.5}
+.g-hit{fill:transparent;cursor:pointer;outline:none}
+.g-hit:focus-visible{stroke:var(--accent);stroke-width:2}
+.goal-table{margin-top:8px;font-size:12px}
+.goal-table summary{cursor:pointer;color:var(--ink2);font-weight:500}
+.goal-table .gtbl-wrap{overflow-x:auto;margin-top:8px}
+.gtbl{width:100%;border-collapse:collapse;font-size:12px}
+.gtbl th,.gtbl td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule2);white-space:nowrap}
+.gtbl th{color:var(--ink3);font-weight:500}
+.gtbl td.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+.gtbl td.w{white-space:normal}
+.gwarn{margin:10px 0 0;padding-left:18px;color:var(--warn)}
+.goal-strip-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0 4px;padding-top:12px;border-top:1px solid var(--rule)}
+.goal-strip-head .lb{font-size:12px;font-weight:600;color:var(--ink2)}
+.goal-strip-head .gl{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--ink3)}
+.gs-done{fill:var(--accent);stroke:var(--card);stroke-width:1.5}
+.gs-open{fill:var(--card);stroke:var(--accent);stroke-width:2}
+.gs-branch{fill:var(--ink2)}
+.gs-end{fill:var(--ink)}
+.goal-detail{font-size:12.5px;color:var(--ink2);min-height:20px;margin-top:6px;line-height:1.6}
+.goal-detail b{color:var(--ink);font-weight:600}
+.goal-foot{display:flex;gap:6px 12px;flex-wrap:wrap;justify-content:space-between;margin-top:12px;font-size:11.5px;color:var(--ink3)}
+@media (max-width:820px){
+  .goal-tiles{grid-template-columns:1fr}
+  .gchip{min-height:40px;padding:6px 12px}
+}
 </style>
 
 </head>
@@ -645,6 +704,32 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
           <span class="mini">실적 <b id="capActual">0:00</b></span>
           <span class="mini">상한 <b id="capLimit">25:00</b></span>
         </div>
+      </div>
+    </section>
+
+    <!-- 목표 카드 (2026-10-24) — 볼트 노트의 확률 표를 브리지 getGoals로 읽기만 한다.
+         공개 저장소라 카드 문구는 노트의 '카드 설정'에서 받는다. 브리지가 없으면 숨긴다 -->
+    <section data-tab="look" class="card wide" id="cardGoals" hidden>
+      <h2><span id="goalsTitle">목표</span> <span class="spacer"></span>
+        <button class="ghost sm" id="goalsRefresh">새로고침</button>
+        <span class="eyebrow" id="goalsStatus" aria-live="polite">불러오는 중…</span>
+      </h2>
+      <div class="goal-tiles" id="goalTiles"></div>
+      <div class="goal-chips" id="goalChips" role="group" aria-label="그래프에 표시할 지표"></div>
+      <div class="goal-chart" id="goalChart"></div>
+      <details class="goal-table" id="goalTableWrap"><summary>표로 보기</summary><div id="goalTable"></div></details>
+      <div class="goal-strip-head">
+        <span class="lb">이정표</span>
+        <span class="gl"><svg width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4" class="gs-done"/></svg>끝낸 이정표</span>
+        <span class="gl"><svg width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="3.5" class="gs-open"/></svg>열린 이정표</span>
+        <span class="gl" id="goalMarkLegend" hidden><svg width="10" height="10" aria-hidden="true"><path d="M5 0.5 9.5 5 5 9.5 0.5 5Z" class="gs-branch"/></svg><span id="goalMarkNames"></span></span>
+        <span class="gl">세로로 쌓인 점은 날짜가 가까워 비켜 놓은 것입니다(높이는 의미 없음)</span>
+      </div>
+      <div class="goal-strip" id="goalStrip"></div>
+      <div class="goal-detail" id="goalDetail" aria-live="polite"></div>
+      <div class="goal-foot">
+        <span id="goalNote"></span>
+        <span class="mini" id="goalSync">—</span>
       </div>
     </section>
 
@@ -1091,7 +1176,7 @@ function save(){
      온다. 이때 res.json()이 던지는 예외를 "연결 실패"와 구분해 알려준다.
    반환: 파싱된 JSON 객체, 실패 시 { ok:false, error, network:true } */
 const BRIDGE_TIMEOUT = 20000;
-const BRIDGE_READ_ACTIONS = { list:1, loadState:1, getPlan:1, getTasks:1 };
+const BRIDGE_READ_ACTIONS = { list:1, loadState:1, getPlan:1, getTasks:1, getGoals:1 };
 async function bridgeFetch(payload){
   const url = (S.settings.scriptUrl||"").trim();
   if (!url) return { ok:false, error:"웹 앱 URL 없음", network:true };
@@ -1742,6 +1827,7 @@ function renderVaultTasks(){
   const listEl = document.getElementById("vaultList");
   const statEl = document.getElementById("vaultStatus");
   if (!listEl) return;
+  renderGoalStrip();   /* 열린 #이정표가 목표 카드의 이정표 띠에 들어간다 */
 
   if (vaultErr){
     statEl.textContent = "불러오기 실패";
@@ -1846,6 +1932,424 @@ async function fetchVaultTasks(opts){
 function vaultOn(d){ return vaultTasks.filter(x=>x.due === d); }
 
 document.getElementById("vaultRefresh").addEventListener("click", ()=>fetchVaultTasks());
+
+/* ══ 목표 카드 (2026-10-24) ═══════════════════════════════
+   볼트 노트의 '지표'·'확률 시계열'·'카드 설정' 표를 브리지 getGoals(형식 2)가 JSON으로
+   주고, 대시보드는 읽기만 한다. 이 파일은 공개 저장소에 있으므로 카드에 보이는 문구
+   (제목·지표 이름·묶음·기간·표시 지점·설명)는 전부 노트에서 받고 코드에는 두지 않는다.
+   값은 기록에서만 바뀌므로 보간하지 않고 계단선으로 그린다.
+   goalsData는 S에 넣지 않는다(vaultTasks와 같은 이유: 원본이 둘이 된다).
+   브리지가 없는 환경에서는 카드를 숨긴다. */
+const GOALS_SCHEMA = 2;
+let goalsData = null, goalsAt = null, goalsErr = null;
+
+/* 지표 색은 노트 '지표' 표의 순서로 정한다(칩을 끄고 켜도 색이 바뀌지 않는다). 7번째부터는 회색 */
+function goalIndex(key){ return goalsData ? goalsData.metrics.findIndex(m=>m.key===key) : -1; }
+function goalColor(key){ const i = goalIndex(key); return (i < 0 || i > 5) ? "var(--g0)" : "var(--g"+(i+1)+")"; }
+function goalWeak(m){ return /근거\s*(가장\s*)?약/.test(m.note||""); }
+function goalShort(m){ return m.short || (m.name.length > 8 ? m.name.slice(0,8)+"…" : m.name); }
+function goalRange(r){ return r.lo === r.hi ? r.lo+"%" : r.lo+"~"+r.hi+"%"; }
+function goalMid(r){ return (r.lo + r.hi) / 2; }
+/* 직전 값 대비 — 하한·상한의 중앙값 차이 */
+function goalDelta(prev, cur){
+  if (!prev) return "첫 기록";
+  const d = goalMid(cur) - goalMid(prev);
+  if (Math.abs(d) < 0.05) return "변화 없음";
+  const v = Math.abs(d);
+  return (d > 0 ? "▲ " : "▼ ") + (Number.isInteger(v) ? v : v.toFixed(1)) + "%p";
+}
+/* 올해 날짜는 10.24처럼, 다른 해는 연도까지 — 여러 해에 걸친 카드라 해가 바뀌면 헷갈린다 */
+function goalDate(d){ return d.slice(0,4) === today().slice(0,4) ? shortDate(d) : d; }
+function goalRowOk(r){
+  return r && /^\d{4}-\d{2}-\d{2}$/.test(r.date) && Number.isFinite(r.lo) && Number.isFinite(r.hi);
+}
+/* key → 날짜순 행. 지표 표에 없는 key는 그래프에서 빼고 따로 센다 */
+function goalByKey(){
+  const by = {}, unknown = {};
+  goalsData.metrics.forEach(m=>{ by[m.key] = []; });
+  goalsData.series.forEach(r=>{
+    if (!goalRowOk(r)) return;
+    if (by[r.key]) by[r.key].push(r);
+    else unknown[r.key] = (unknown[r.key]||0) + 1;
+  });
+  Object.keys(by).forEach(k=>by[k].sort((a,b)=>a.date.localeCompare(b.date)));
+  return { by, unknown };
+}
+/* 카드 설정 — 노트에 없으면 기록에서 짐작한다(시작=첫 기록의 달, 목표=시작+4년) */
+function goalCfg(){
+  const c = (goalsData && goalsData.config) || {};
+  const first = goalsData && goalsData.series.filter(goalRowOk).map(r=>r.date).sort()[0];
+  const start = c.start || (first || today()).slice(0,7) + "-01";
+  const end = c.end || addDays((Number(start.slice(0,4)) + 4) + start.slice(4), -1);
+  return { title: c.title || "목표", note: c.note || "", start, end,
+    endLabel: c.endLabel || "목표 " + end.slice(0,7),
+    marks: Array.isArray(c.marks) ? c.marks.filter(m=>m && /^\d{4}-\d{2}-\d{2}$/.test(m.date)) : [],
+    defaults: Array.isArray(c.defaults) ? c.defaults : [] };
+}
+/* 칩 선택 — 한 번 고르면 이 기기에 기억한다. 고른 적이 없으면 카드 설정의 '기본',
+   그것도 없으면 타일에 들어가는(묶음이 있는) 지표 */
+function goalSelected(){
+  let a = null;
+  try{ a = JSON.parse(localStorage.getItem("dd-goals-sel") || "null"); }catch(e){}
+  if (Array.isArray(a)) return a;
+  const d = goalCfg().defaults;
+  if (d.length) return d.slice();
+  return goalsData ? goalsData.metrics.filter(m=>m.group).map(m=>m.key) : [];
+}
+function goalX(d, L, R, cfg){
+  const t0 = new Date(cfg.start+"T00:00:00"), t1 = new Date(cfg.end+"T00:00:00");
+  const t = Math.min(t1, Math.max(t0, new Date(d+"T00:00:00")));
+  return +(L + (t - t0) / (t1 - t0) * (R - L)).toFixed(1);
+}
+/* 시작과 끝 사이의 1월 1일 */
+function goalYears(cfg){
+  const out = [];
+  for (let y = Number(cfg.start.slice(0,4)) + 1; y <= Number(cfg.end.slice(0,4)); y++) out.push(String(y));
+  return out;
+}
+function goalWidth(){
+  const card = document.getElementById("cardGoals");
+  const cs = getComputedStyle(card);
+  const w = card.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  return w > 200 ? Math.round(w) : 640;
+}
+/* 할 일 줄의 [영향:: …] — 브리지 getTasks는 인라인 필드를 text에 그대로 남긴다 */
+function goalImpact(text){
+  const m = String(text||"").match(/\[영향::\s*([^\]]*)\]/);
+  return { label: String(text||"").replace(/\s*\[영향::[^\]]*\]\s*/, " ").trim(), impact: m ? m[1].trim() : "" };
+}
+function goalsLinked(){ return mode()==="script" && !!(S.settings.scriptUrl||"").trim(); }
+
+function goalsErrorText(res){
+  if (res && /알 수 없는 요청/.test(res.error||"") && /getGoals/.test(res.error||"")) return "브리지를 v14로 배포해야 합니다";
+  if (res && res.ok && res.schema !== GOALS_SCHEMA) return "브리지를 v14로 배포해야 합니다 (응답 형식이 옛 버전)";
+  if (res && res.ok && (!Array.isArray(res.series) || !Array.isArray(res.metrics)))
+    return "웹 앱 응답에 확률 시계열이 없습니다 (브리지 버전 확인 필요)";
+  return vaultErrorText(res);
+}
+
+async function fetchGoals(opts){
+  opts = opts || {};
+  if (!goalsLinked()){ renderGoals(); return; }
+  const res = await bridgeFetch({ action:"getGoals" });
+  if (!res || !res.ok || res.schema !== GOALS_SCHEMA || !Array.isArray(res.series) || !Array.isArray(res.metrics)){
+    goalsErr = goalsErrorText(res);
+    renderGoals();
+    if (!opts.silent) toast("목표 확률을 불러오지 못했습니다 — " + goalsErr);
+    return;
+  }
+  goalsErr = null;
+  goalsData = { modifiedTime: res.modifiedTime || null, metrics: res.metrics, series: res.series,
+    config: res.config || null, warnings: Array.isArray(res.warnings) ? res.warnings : [] };
+  goalsAt = new Date();
+  renderGoals();
+  if (!opts.silent) toast("목표 기록 " + res.series.length + "행을 불러왔습니다.");
+}
+
+function renderGoals(){
+  const card = document.getElementById("cardGoals");
+  if (!card) return;
+  /* 브리지를 쓰지 않는 사람에게는 카드 자체가 없다 */
+  card.hidden = !goalsLinked();
+  if (card.hidden) return;
+  const cfg = goalCfg();
+  const statEl = document.getElementById("goalsStatus");
+  const tilesEl = document.getElementById("goalTiles");
+  const clear = ()=>{ ["goalChips","goalChart","goalTable"].forEach(id=>{ document.getElementById(id).innerHTML = ""; });
+    document.getElementById("goalTableWrap").hidden = true; };
+  document.getElementById("goalsTitle").textContent = goalsData ? cfg.title : "목표";
+  document.getElementById("goalNote").textContent = goalsData ? cfg.note : "";
+  document.getElementById("goalSync").textContent = goalsAt ? "마지막 동기화 " + hm(goalsAt) : "—";
+  renderGoalStrip();
+
+  if (goalsErr){
+    statEl.textContent = "불러오기 실패"; statEl.title = goalsErr;
+    tilesEl.innerHTML = '<div class="empty">목표 확률을 불러오지 못했습니다.<br>이유: '+esc(goalsErr)+'</div>';
+    clear(); return;
+  }
+  statEl.title = "";
+  if (!goalsData){
+    statEl.textContent = "불러오는 중…";
+    tilesEl.innerHTML = '<div class="empty">…</div>';
+    clear(); return;
+  }
+
+  const { by, unknown } = goalByKey();
+  const rowsN = Object.keys(by).reduce((a,k)=>a+by[k].length, 0);
+  const warns = goalsData.warnings.slice();
+  Object.keys(unknown).forEach(k=>warns.push({ line:null, reason:"'지표' 표에 없는 key라 그래프에서 뺐습니다: "+k+" ("+unknown[k]+"행)" }));
+  statEl.textContent = goalsData.metrics.length + "개 지표 · 갱신 " + hm(goalsAt) + (warns.length ? " · 경고 " + warns.length : "");
+  statEl.title = warns.map(w=>(w.line ? "줄 "+w.line+": " : "")+w.reason).join("\n");
+
+  renderGoalTiles(by);
+  document.getElementById("goalTableWrap").hidden = false;
+  renderGoalTable(by, warns);
+  if (rowsN < 2){
+    document.getElementById("goalChips").innerHTML = "";
+    document.getElementById("goalChart").innerHTML = '<div class="empty">'+(rowsN
+      ? "기록이 하나뿐이라 아직 추이가 없습니다. 값이 바뀌어 행이 늘면 여기에 그려집니다."
+      : "확률 시계열 표가 비어 있습니다. 노트의 '확률 시계열' 표를 확인해 주세요.")+'</div>';
+    return;
+  }
+  renderGoalChips();
+  renderGoalChart(by, cfg);
+}
+
+/* 요약 타일 — 노트 '지표' 표의 묶음마다 한 타일. 묶음이 빈 지표는 타일에 넣지 않는다 */
+function renderGoalTiles(by){
+  const groups = [];
+  goalsData.metrics.forEach(m=>{
+    if (!m.group) return;
+    let g = groups.find(x=>x.name===m.group);
+    if (!g){ g = { name:m.group, ms:[] }; groups.push(g); }
+    g.ms.push(m);
+  });
+  const row = m=>{
+    const rows = by[m.key] || [];
+    const cur = rows[rows.length-1], prev = rows[rows.length-2];
+    if (!cur) return '<div class="gt-row"><span class="gt-sub">'+esc(goalShort(m))+'</span><span class="gt-v">—</span><span class="gt-m">기록 없음</span></div>';
+    return '<div class="gt-row"><span class="gt-sub" title="'+esc(m.name)+'">'+esc(goalShort(m))+'</span>'+
+      '<span class="gt-v">'+goalRange(cur)+'</span>'+
+      '<span class="gt-d" title="직전 값 대비, 하한·상한의 중앙값 기준">'+goalDelta(prev, cur)+'</span>'+
+      '<span class="gt-m">'+goalDate(cur.date)+(cur.milestone ? " · "+esc(cur.milestone) : "")+'</span></div>';
+  };
+  document.getElementById("goalTiles").innerHTML = groups.map(g=>{
+    const weak = g.ms.filter(goalWeak).map(m=>m.note);
+    return '<div class="goal-tile"><div class="gt-h">'+esc(g.name)+
+      (weak.length ? ' <span class="mini">'+esc(weak.join(" · "))+'</span>' : '')+'</div>'+
+      g.ms.map(row).join("")+'</div>';
+  }).join("");
+}
+
+function goalSwatch(m){
+  return '<svg width="18" height="10" aria-hidden="true"><line x1="1" y1="5" x2="17" y2="5" stroke="'+goalColor(m.key)+
+    '" stroke-width="2.5" stroke-linecap="round"'+(goalWeak(m) ? ' stroke-dasharray="4 3"' : '')+'/></svg>';
+}
+function renderGoalChips(){
+  const sel = goalSelected();
+  document.getElementById("goalChips").innerHTML = goalsData.metrics.map(m=>
+    '<button type="button" class="gchip" data-gkey="'+esc(m.key)+'" aria-pressed="'+(sel.indexOf(m.key) > -1)+'" title="'+esc(m.name+(m.note ? " — "+m.note : ""))+'">'+
+      goalSwatch(m) + esc(goalShort(m)) + (goalWeak(m) ? ' <span class="weak">근거 약함</span>' : '') + '</button>').join("");
+}
+
+/* 추이 그래프 — 띠(하한~상한) + 중앙값 계단선(step-after). 마지막 값은 오늘까지만 */
+function renderGoalChart(by, cfg){
+  const el = document.getElementById("goalChart");
+  const sel = goalSelected();
+  const ms = goalsData.metrics.filter(m=>sel.indexOf(m.key) > -1 && (by[m.key]||[]).length);
+  const W = goalWidth(), H = MOBILE.matches ? 190 : 220;
+  const L = 34, R = W - 10, T = 22, B = H - 24, t = today();
+  const y = v => +(B - v / 100 * (B - T)).toFixed(1);
+  const X = d => goalX(d, L, R, cfg);
+  const xe = X(t), years = goalYears(cfg);
+  const out = [];
+  [0,25,50,75,100].forEach(v=>{
+    out.push('<line class="'+(v===0 ? "g-base" : "g-grid")+'" x1="'+L+'" x2="'+R+'" y1="'+y(v)+'" y2="'+y(v)+'"/>');
+    if (v % 50 === 0) out.push('<text class="g-ax" x="'+(L-6)+'" y="'+(y(v)+3)+'" text-anchor="end">'+v+'%</text>');
+  });
+  /* 시작 라벨은 첫 해 눈금과 겹치지 않을 때만 (모바일 폭에서는 붙는다) */
+  if (!years.length || X(years[0]+"-01-01") - L > 48)
+    out.push('<text class="g-ax" x="'+L+'" y="'+(H-6)+'">'+cfg.start.slice(2,7).replace("-",".")+'</text>');
+  years.forEach(yr=>{
+    const x = X(yr+"-01-01");
+    out.push('<line class="g-base" x1="'+x+'" x2="'+x+'" y1="'+B+'" y2="'+(B+4)+'"/><text class="g-ax" x="'+x+'" y="'+(H-6)+'" text-anchor="middle">'+yr+'</text>');
+  });
+  out.push('<line class="g-goal" x1="'+R+'" x2="'+R+'" y1="'+(T-8)+'" y2="'+B+'"/><text class="g-axl" x="'+R+'" y="'+(T-12)+'" text-anchor="end">'+esc(cfg.endLabel)+'</text>');
+  out.push('<line class="g-today" x1="'+xe+'" x2="'+xe+'" y1="'+(T-8)+'" y2="'+B+'"/><text class="g-axl" x="'+xe+'" y="'+(T-12)+'" text-anchor="'+(xe > R-140 ? "end" : "start")+'">오늘</text>');
+
+  const bands = [], lines = [], dots = [], hits = [], labs = [];
+  ms.forEach(m=>{
+    const rows = by[m.key].filter(r=>r.date <= t);
+    if (!rows.length) return;
+    const c = goalColor(m.key), weak = goalWeak(m), n = rows.length;
+    const xs = rows.map(r=>X(r.date)), nx = i => i + 1 < n ? xs[i+1] : xe;
+    let d = "M"+xs[0]+","+y(goalMid(rows[0]));
+    const up = [], lo = [];
+    rows.forEach((r,i)=>{
+      d += " H"+nx(i) + (i + 1 < n ? " V"+y(goalMid(rows[i+1])) : "");
+      up.push(xs[i]+","+y(r.hi), nx(i)+","+y(r.hi));
+      lo.push(xs[i]+","+y(r.lo), nx(i)+","+y(r.lo));
+    });
+    bands.push('<polygon points="'+up.concat(lo.reverse()).join(" ")+'" fill="'+c+'" fill-opacity="'+(weak ? .08 : .16)+'"/>');
+    lines.push('<path d="'+d+'" fill="none" stroke="'+c+'" stroke-width="2" stroke-linejoin="round"'+(weak ? ' stroke-dasharray="5 4"' : '')+'/>');
+    rows.forEach((r,i)=>{
+      const cx = xs[i], cy = y(goalMid(r)), prev = rows[i-1];
+      const tip = r.date+" · "+goalShort(m)+"\n"+(prev ? goalRange(prev) : "—")+" → "+goalRange(r)+(r.milestone ? "\n"+r.milestone : "");
+      dots.push('<circle cx="'+cx+'" cy="'+cy+'" r="4" fill="'+c+'" stroke="var(--card)" stroke-width="2"/>');
+      hits.push('<circle class="g-hit" cx="'+cx+'" cy="'+cy+'" r="11" tabindex="0" role="img" aria-label="'+esc(tip.replace(/\n/g," · "))+'" data-gtip="'+esc(tip)+'"/>');
+    });
+    labs.push({ y:y(goalMid(rows[n-1])), text:goalShort(m) });
+  });
+  /* 선 끝 라벨 — 겹치지 않게 13px 간격으로 민다 */
+  labs.sort((a,b)=>a.y-b.y);
+  labs.forEach((l,i)=>{ if (i && l.y - labs[i-1].y < 13) l.y = labs[i-1].y + 13; });
+  const right = xe > R - 90;
+  const labTxt = labs.map(l=>'<text class="g-lab" x="'+(right ? xe-8 : xe+8)+'" y="'+(Math.min(B, l.y)+4)+'" text-anchor="'+(right ? "end" : "start")+'">'+esc(l.text)+'</text>');
+
+  const span = cfg.start.slice(0,7)+"부터 "+cfg.end.slice(0,7)+"까지";
+  const names = ms.map(m=>goalShort(m)+" "+goalRange(by[m.key][by[m.key].length-1])).join(", ");
+  el.innerHTML = ms.length
+    ? '<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="group" aria-label="'+esc(cfg.title)+' 확률 추이, '+span+'. 표시: '+esc(names)+'">'+
+        '<title>'+esc(cfg.title)+' 확률 추이 ('+span+') — '+esc(names)+'</title>'+
+        bands.join("") + out.join("") + lines.join("") + dots.join("") + labTxt.join("") + hits.join("") + '</svg>'
+    : '<div class="empty">위 칩에서 그래프에 표시할 지표를 골라 주세요.</div>';
+}
+
+function renderGoalTable(by, warns){
+  const rows = [];
+  goalsData.metrics.forEach(m=>(by[m.key]||[]).forEach((r,i,a)=>rows.push({ r, m, prev:a[i-1] })));
+  rows.sort((a,b)=>a.r.date.localeCompare(b.r.date));
+  document.getElementById("goalTable").innerHTML =
+    '<div class="gtbl-wrap"><table class="gtbl"><thead><tr><th>날짜</th><th>지표</th><th>범위</th><th>직전</th><th>이정표</th></tr></thead><tbody>'+
+    rows.map(x=>'<tr><td class="n">'+x.r.date+'</td><td>'+esc(x.m.name)+'</td><td class="n">'+goalRange(x.r)+'</td><td class="n">'+
+      (x.prev ? goalRange(x.prev) : "—")+'</td><td class="w">'+esc(x.r.milestone||"")+'</td></tr>').join("")+
+    '</tbody></table></div>'+
+    (warns.length ? '<ul class="gwarn">'+warns.map(w=>'<li>'+(w.line ? "줄 "+w.line+": " : "")+esc(w.reason)+'</li>').join("")+'</ul>' : "");
+}
+
+/* 이정표 띠 — 끝낸 것(시계열의 milestone)은 채운 점(선 위), 열린 #이정표(Tasks.md)는
+   빈 점(선 아래). 가까운 점은 줄을 바꿔 쌓는다(높이는 의미 없음 — 범례에 적어 둠).
+   카드 설정의 '표시'는 마름모로 찍는다. */
+let goalStripItems = [];
+function renderGoalStrip(){
+  const el = document.getElementById("goalStrip");
+  if (!el || !goalsLinked()) return;
+  const cfg = goalCfg();
+  const W = goalWidth(), L = 34, R = W - 10, t = today();
+  const X = d => goalX(d, L, R, cfg);
+  const items = [];
+  if (goalsData && !goalsErr){
+    const { by } = goalByKey(), groups = {};
+    goalsData.metrics.forEach(m=>(by[m.key]||[]).forEach((r,i,a)=>{
+      if (!r.milestone || r.date > t) return;
+      const k = r.date+"|"+r.milestone;
+      (groups[k] = groups[k] || { done:true, date:r.date, label:r.milestone, lines:[] })
+        .lines.push(goalShort(m)+" "+(a[i-1] ? goalRange(a[i-1]) : "—")+" → "+goalRange(r));
+    }));
+    Object.keys(groups).forEach(k=>items.push(groups[k]));
+  }
+  let undated = 0;
+  vaultTasks.filter(x=>x.status==="todo" && (x.tags||[]).indexOf("#이정표") > -1).forEach(x=>{
+    const d = x.due || x.start;
+    if (!d){ undated++; return; }
+    const f = goalImpact(x.text);
+    items.push({ done:false, date:d, label:f.label, impact:f.impact, due:x.due, start:x.start });
+  });
+  items.forEach(it=>{ it.x = X(it.date); });
+  items.sort((a,b)=>a.x - b.x || a.date.localeCompare(b.date));
+  const lanes = { true:[], false:[] };
+  items.forEach(it=>{
+    const ls = lanes[it.done];
+    let k = ls.findIndex(lx=>it.x - lx >= 12);
+    if (k < 0){ k = Math.min(ls.length, 3); }
+    ls[k] = it.x; it.lane = k;
+  });
+  const nd = Math.max(1, lanes.true.length), no = Math.max(1, lanes.false.length);
+  const base = 22 + nd * 12, H = base + 10 + no * 12 + 16;
+  const o = [];
+  o.push('<line class="g-base" x1="'+L+'" x2="'+R+'" y1="'+base+'" y2="'+base+'" stroke-width="2"/>');
+  goalYears(cfg).forEach(yr=>{
+    const x = X(yr+"-01-01");
+    o.push('<line class="g-base" x1="'+x+'" x2="'+x+'" y1="'+(base-3)+'" y2="'+(base+3)+'"/><text class="g-ax" x="'+x+'" y="'+(H-4)+'" text-anchor="middle">'+yr+'</text>');
+  });
+  const xt = X(t);
+  o.push('<line class="g-today" x1="'+xt+'" x2="'+xt+'" y1="12" y2="'+(H-14)+'"/><text class="g-axl" x="'+xt+'" y="9" text-anchor="'+(xt > R-140 ? "end" : "start")+'">오늘</text>');
+  /* 표시 지점 — 라벨은 '오늘'·다른 표시와 겹치지 않을 때만(범례에 이름이 있다) */
+  let lastLab = -1e9;
+  const marks = cfg.marks.filter(mk=>mk.date >= cfg.start && mk.date <= cfg.end);
+  marks.forEach(mk=>{
+    const xb = X(mk.date);
+    o.push('<path class="gs-branch" d="M'+xb+' '+(base-6)+' '+(xb+6)+' '+base+' '+xb+' '+(base+6)+' '+(xb-6)+' '+base+'Z"/>');
+    if (mk.label && Math.abs(xt - xb) > 56 && xb - lastLab > 80 && R - xb > 60){
+      o.push('<text class="g-axl" x="'+xb+'" y="9" text-anchor="middle">'+esc(mk.label.replace(/\s*\(.*\)\s*$/, ""))+'</text>');
+      lastLab = xb;
+    }
+  });
+  o.push('<rect class="gs-end" x="'+(R-1.5)+'" y="'+(base-8)+'" width="3" height="16" rx="1"/><text class="g-axl" x="'+R+'" y="9" text-anchor="end">'+cfg.end.slice(0,7)+'</text>');
+  const ml = document.getElementById("goalMarkLegend");
+  ml.hidden = !marks.length;
+  document.getElementById("goalMarkNames").textContent = marks.map(mk=>mk.label || mk.date).join(" · ");
+  const hits = [];
+  goalStripItems = items;
+  items.forEach((it,i)=>{
+    const cy = it.done ? base - 10 - it.lane * 12 : base + 10 + it.lane * 12;
+    o.push('<circle class="'+(it.done ? "gs-done" : "gs-open")+'" cx="'+it.x+'" cy="'+cy+'" r="'+(it.done ? 5 : 4.5)+'"/>');
+    const tip = it.done
+      ? it.date+" · 끝낸 이정표\n"+it.label+"\n"+it.lines.join("\n")
+      : (it.due ? "📅 "+it.due : "🛫 "+it.start)+" · 열린 이정표\n"+it.label+(it.impact ? "\n영향: "+it.impact : "");
+    hits.push('<circle class="g-hit" cx="'+it.x+'" cy="'+cy+'" r="10" tabindex="0" role="button" data-gidx="'+i+'" aria-label="'+esc(tip.replace(/\n/g," · "))+'" data-gtip="'+esc(tip)+'"/>');
+  });
+  const doneN = items.filter(x=>x.done).length, openN = items.length - doneN;
+  el.innerHTML = '<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="group" aria-label="이정표 띠, '+cfg.start.slice(0,7)+'부터 '+cfg.end.slice(0,7)+'까지. 끝낸 이정표 '+doneN+'개, 열린 이정표 '+openN+'개">'+
+    '<title>이정표 띠 — 끝낸 '+doneN+' · 열린 '+openN+'</title>'+o.join("")+hits.join("")+'</svg>';
+  const det = document.getElementById("goalDetail");
+  if (!det.dataset.pinned){
+    det.textContent = (vaultErr ? "열린 이정표를 불러오지 못했습니다(Tasks.md) · " : "") +
+      "점을 누르면 내용이 여기에 표시됩니다." + (undated ? " 날짜 없는 열린 이정표 "+undated+"개는 띠에 없습니다." : "");
+  }
+}
+function goalShowDetail(i){
+  const it = goalStripItems[i], det = document.getElementById("goalDetail");
+  if (!it) return;
+  det.dataset.pinned = "1";
+  det.innerHTML = it.done
+    ? '<b>'+esc(it.label)+'</b> <span class="mini">'+it.date+' · 끝냄</span><br>'+it.lines.map(esc).join(" · ")
+    : '<b>'+esc(it.label)+'</b> <span class="mini">'+(it.due ? "📅 "+it.due : "🛫 "+it.start)+'</span><br>영향: '+esc(it.impact || "(영향 문구 없음)");
+}
+
+/* 그래프·띠 공용 툴팁 (#tip 재사용). 터치는 탭하면 보이고 다른 곳을 누르면 닫힌다 */
+(function(){
+  const tipEl = document.getElementById("tip");
+  const hide = ()=>{ tipEl.style.opacity = "0"; };
+  function show(el, ev){
+    tipEl.textContent = el.getAttribute("data-gtip");
+    tipEl.style.opacity = "1";
+    const r = el.getBoundingClientRect();
+    const px = ev && ev.clientX != null ? ev.clientX : r.left + r.width / 2;
+    const py = ev && ev.clientY != null ? ev.clientY : r.top;
+    const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+    let left = px + 12; if (left + w > window.innerWidth - 8) left = Math.max(8, px - w - 12);
+    let top = py - h - 10; if (top < 8) top = py + 16;
+    tipEl.style.left = left + "px"; tipEl.style.top = top + "px";
+  }
+  ["goalChart","goalStrip"].forEach(id=>{
+    const box = document.getElementById(id);
+    box.addEventListener("mouseover", e=>{ const h = e.target.closest("[data-gtip]"); if (h) show(h, e); });
+    box.addEventListener("mousemove", e=>{ const h = e.target.closest("[data-gtip]"); if (h) show(h, e); });
+    box.addEventListener("mouseout", e=>{ if (e.target.closest("[data-gtip]")) hide(); });
+    box.addEventListener("focusin", e=>{ const h = e.target.closest("[data-gtip]"); if (h) show(h); });
+    box.addEventListener("focusout", hide);
+    box.addEventListener("click", e=>{
+      const h = e.target.closest("[data-gtip]"); if (!h) return;
+      show(h, e);
+      if (h.hasAttribute("data-gidx")) goalShowDetail(+h.getAttribute("data-gidx"));
+    });
+    box.addEventListener("keydown", e=>{
+      const h = e.target.closest("[data-gidx]");
+      if (h && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); goalShowDetail(+h.getAttribute("data-gidx")); }
+    });
+  });
+  document.addEventListener("touchstart", e=>{ if (!e.target.closest("[data-gtip]")) hide(); }, { passive:true });
+  window.addEventListener("scroll", hide, { passive:true });
+})();
+
+document.getElementById("goalChips").addEventListener("click", e=>{
+  const b = e.target.closest("[data-gkey]"); if (!b) return;
+  const sel = goalSelected(), k = b.dataset.gkey, i = sel.indexOf(k);
+  if (i > -1) sel.splice(i, 1); else sel.push(k);
+  try{ localStorage.setItem("dd-goals-sel", JSON.stringify(sel)); }catch(err){}
+  renderGoals();
+});
+document.getElementById("goalsRefresh").addEventListener("click", ()=>fetchGoals());
+/* 폭이 바뀌면(회전·탭 전환으로 처음 보일 때 포함) 다시 그린다 — 글자가 늘어나지 않게
+   viewBox를 실제 폭으로 맞추기 때문 */
+if (typeof ResizeObserver !== "undefined"){
+  let lastW = 0;
+  new ResizeObserver(()=>{
+    const w = goalWidth(); if (Math.abs(w - lastW) < 4) return;
+    lastW = w; try{ renderGoals(); }catch(err){ console.error("목표 카드 렌더 오류", err); }
+  }).observe(document.getElementById("cardGoals"));
+}
 
 /* ── 볼트 항목 체크 ──────────────────────────────────────
    브리지 applyTasks가 Tasks.md의 해당 줄만 갈아끼운다.
@@ -3349,7 +3853,7 @@ document.getElementById("sheetClose").addEventListener("click", async ()=>{
   if (mode()==="script" && S.settings.scriptUrl) await initialSync({render:true});
   save();
   renderAll();
-  if (mode()==="script" && S.settings.scriptUrl){ syncCalendar(); fetchVaultTasks({silent:true}); }
+  if (mode()==="script" && S.settings.scriptUrl){ syncCalendar(); fetchVaultTasks({silent:true}); fetchGoals({silent:true}); }
 });
 document.getElementById("btnSyncNow").addEventListener("click", ()=>initialSync({render:true}));
 document.getElementById("sheet").addEventListener("click", e=>{
@@ -3518,7 +4022,7 @@ function renderAll(){
     renderHeader, renderCalendar, renderTodos, renderVaultTasks, renderTimetable,
     ()=>barSet("todayBars", today(), today()),
     renderPlans, renderRoutine, renderHabits, renderSleep, renderReviews,
-    renderJournal, renderWeek, renderClosing, renderEventList, updateDashboardSummary
+    renderJournal, renderWeek, renderGoals, renderClosing, renderEventList, updateDashboardSummary
   ];
   steps.forEach(fn=>{
     try{ fn(); }
@@ -3553,6 +4057,7 @@ function renderAll(){
   if (mode()==="script" && S.settings.scriptUrl){
     syncCalendar();
     fetchVaultTasks({silent:true});
+    fetchGoals({silent:true});
   } else if (mode()==="oauth" && S.settings.clientId){
     let tries = 0;
     const wait = setInterval(()=>{
@@ -3576,6 +4081,7 @@ function renderAll(){
     if (mode()==="script" && S.settings.scriptUrl){
       syncCalendar({quiet:true});
       fetchVaultTasks({silent:true});
+      fetchGoals({silent:true});
       if (reason === "resume") initialSync({silent:true, render:true});
     } else if (mode()==="oauth" && accessToken){
       syncCalendar({quiet:true});

@@ -592,6 +592,9 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
 .g-lab{font:600 11px "IBM Plex Sans KR",sans-serif;fill:var(--ink)}
 .g-today{stroke:var(--ink3);stroke-width:1;stroke-dasharray:3 3}
 .g-goal{stroke:var(--ink2);stroke-width:1.5}
+/* 지표별 달성 예상 시점 (2026-10-25) — 확률판 '지표' 표의 '예상' 칸. 그 지표 색으로 희미하게 */
+.g-exp{stroke-width:1.5;stroke-opacity:.38;stroke-dasharray:2 3}
+.g-expl{font:500 10px "IBM Plex Sans KR",sans-serif;fill-opacity:.85}
 .g-hit{fill:transparent;cursor:pointer;outline:none}
 .g-hit:focus-visible{stroke:var(--accent);stroke-width:2}
 .goal-table{margin-top:8px;font-size:12px}
@@ -2240,7 +2243,7 @@ function renderGoalTiles(by){
     return '<div class="gt-row"><span class="gt-sub" title="'+esc(m.name)+'">'+esc(goalShort(m))+'</span>'+
       '<span class="gt-v">'+goalRange(cur)+'</span>'+
       '<span class="gt-d" title="직전 값 대비, 하한·상한의 중앙값 기준">'+goalDelta(prev, cur)+'</span>'+
-      '<span class="gt-m">'+(goalRest(m) ? esc(goalRest(m))+" · " : "")+goalDate(cur.date)+(cur.milestone ? " · "+esc(cur.milestone) : "")+'</span></div>';
+      '<span class="gt-m">'+(goalRest(m) ? esc(goalRest(m))+" · " : "")+(m.expect ? "예상 "+m.expect.slice(0,7)+" · " : "")+goalDate(cur.date)+(cur.milestone ? " · "+esc(cur.milestone) : "")+'</span></div>';
   };
   document.getElementById("goalTiles").innerHTML = groups.map(g=>{
     const weak = g.ms.filter(goalWeak).map(m=>m.note);
@@ -2299,6 +2302,13 @@ function renderGoalChart(by, cfg){
   });
   out.push('<line class="g-goal" x1="'+R+'" x2="'+R+'" y1="'+(T-8)+'" y2="'+B+'"/><text class="g-axl" x="'+R+'" y="'+(T-12)+'" text-anchor="end">'+esc(cfg.endLabel)+'</text>');
   out.push('<line class="g-today" x1="'+xe+'" x2="'+xe+'" y1="'+(T-8)+'" y2="'+B+'"/><text class="g-axl" x="'+xe+'" y="'+(T-12)+'" text-anchor="'+(xe > R-140 ? "end" : "start")+'">오늘</text>');
+  /* 달성 예상 시점 — 그래프에 켠 지표만, 기간 안에 있을 때만. 라벨은 선을 따라 세로로 써서 서로 덜 겹친다 */
+  ms.forEach(m=>{
+    if (!m.expect || m.expect < cfg.start || m.expect > cfg.end) return;
+    const x = X(m.expect), c = goalColor(m.key);
+    out.push('<line class="g-exp" x1="'+x+'" x2="'+x+'" y1="'+T+'" y2="'+B+'" stroke="'+c+'"><title>'+esc(goalShort(m))+' 달성 예상 '+m.expect.slice(0,7)+'</title></line>'+
+      '<text class="g-expl" fill="'+c+'" transform="translate('+(x-3)+','+(B-4)+') rotate(-90)">'+esc(goalShort(m))+' '+m.expect.slice(2,7).replace("-",".")+'</text>');
+  });
 
   const bands = [], lines = [], dots = [], hits = [], labs = [];
   ms.forEach(m=>{

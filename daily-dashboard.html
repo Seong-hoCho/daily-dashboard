@@ -559,6 +559,12 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
 #cardGoals[hidden]{display:none}
 .goal-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .goal-tiles>.empty{grid-column:1 / -1}
+/* 성실성 타일 (2026-10-25) — 확률에 직접 더하지 않는 외부 요인. 이 기기의 습관·수면 기록으로만 계산 */
+.goal-dil{margin-top:10px}
+.goal-dil .gt-bar{height:5px;border-radius:3px;background:var(--rule);margin-top:4px;flex-basis:100%;overflow:hidden}
+.goal-dil .gt-bar>i{display:block;height:100%;background:var(--ink2)}
+.goal-dil .gt-bar>i.ok{background:var(--g3)}
+.goal-dil .gt-bar>i.lo{background:var(--g2)}
 .goal-tile{background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:12px 14px}
 .goal-tile .gt-h{font-size:12px;font-weight:600;color:var(--ink2);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .goal-tile .gt-h .mini{font-weight:400}
@@ -742,6 +748,7 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
         <span class="eyebrow" id="goalsStatus" aria-live="polite">불러오는 중…</span>
       </h2>
       <div class="goal-tiles" id="goalTiles"></div>
+      <div class="goal-tile goal-dil" id="goalDiligence" hidden></div>
       <div class="goal-chips" id="goalChips" role="group" aria-label="그래프에 표시할 지표"></div>
       <div class="goal-legend" id="goalLegend"></div>
       <div class="goal-chart" id="goalChart"></div>
@@ -2128,6 +2135,7 @@ function renderGoals(){
   document.getElementById("goalNote").textContent = goalsData ? cfg.note : "";
   document.getElementById("goalSync").textContent = goalsAt ? "마지막 동기화 " + hm(goalsAt) : "—";
   renderGoalStrip();
+  renderGoalDiligence();
 
   if (goalsErr){
     statEl.textContent = "불러오기 실패"; statEl.title = goalsErr;
@@ -2161,6 +2169,59 @@ function renderGoals(){
   }
   renderGoalChips();
   renderGoalChart(by, cfg);
+}
+
+/* 성실성 타일 — 확률을 움직이는 '전제'(꾸준히 공부할 몸 상태)를 이 기기 기록으로 본다.
+   최근 28일과 그 앞 28일을 비교한다. 습관은 오늘을 빼고(아직 안 끝난 날), 수면은 기록된 날만 센다.
+   숫자는 확률에 더하지 않는다 — 주간 회고가 확률판을 고칠 때 근거로 쓴다. */
+const DIL_DAYS = 28;
+function dilHabit(from){            /* from일 전부터 DIL_DAYS일 (오늘=0) */
+  let slots = 0, hits = 0;
+  for (let i = from; i < from + DIL_DAYS; i++){
+    const d = addDays(today(), -i);
+    S.habits.forEach(h=>{
+      /* 만든 날이 기록에 없어서 첫 체크 날부터 센다 — 새로 넣은 습관이 0%로 깎이지 않게 */
+      const born = Object.keys(h.log||{}).sort()[0];
+      if (!born || d < born) return;
+      slots++; if (h.log && h.log[d]) hits++;
+    });
+  }
+  return slots ? { pct: Math.round(hits/slots*100), hits, slots } : null;
+}
+function dilSleep(from){
+  const goal = (S.settings.sleepGoal||7)*60;
+  let rec = 0, ok = 0;
+  for (let i = from; i < from + DIL_DAYS; i++){
+    const m = sleepMinutes(addDays(today(), -i));
+    if (!m) continue;
+    rec++; if (m >= goal) ok++;
+  }
+  return rec ? { pct: Math.round(ok/rec*100), ok, rec } : null;
+}
+function dilRow(label, cur, prev, detail){
+  if (!cur) return '<div class="gt-row"><span class="gt-sub">'+label+'</span><span class="gt-v">—</span><span class="gt-m">최근 '+DIL_DAYS+'일 기록 없음</span></div>';
+  /* 앞 기간 기록이 7개 미만이면 비교하지 않는다(표본이 너무 작다) */
+  const d = (prev && (prev.slots || prev.rec) >= 7) ? cur.pct - prev.pct : null;
+  const cls = cur.pct >= 80 ? "ok" : (cur.pct < 60 ? "lo" : "");
+  return '<div class="gt-row"><span class="gt-sub">'+label+'</span>'+
+    '<span class="gt-v">'+cur.pct+'%</span>'+
+    '<span class="gt-d" title="앞 '+DIL_DAYS+'일 대비">'+(d === null ? "" : (d > 0 ? "▲"+d : d < 0 ? "▼"+(-d) : "—")+"%p")+'</span>'+
+    '<span class="gt-bar"><i class="'+cls+'" style="width:'+cur.pct+'%"></i></span>'+
+    '<span class="gt-m">'+detail+'</span></div>';
+}
+function renderGoalDiligence(){
+  const el = document.getElementById("goalDiligence");
+  if (!el) return;
+  const hasHabit = S.habits.length > 0, hasSleep = Object.keys(S.sleep||{}).length > 0;
+  el.hidden = !(hasHabit || hasSleep);
+  if (el.hidden) return;
+  const h = dilHabit(1), hp = dilHabit(1 + DIL_DAYS);
+  const s = dilSleep(0), sp = dilSleep(DIL_DAYS);
+  let best = 0;
+  S.habits.forEach(x=>{ const st = streaks(x); if (st.cur > best) best = st.cur; });
+  el.innerHTML = '<div class="gt-h">성실성 <span class="mini">최근 '+DIL_DAYS+'일 · 확률에 직접 더하지 않는 전제 지표 · 80% 이상 좋음, 60% 미만 주의</span></div>'+
+    (hasHabit ? dilRow("습관 달성률", h, hp, h ? h.hits+"/"+h.slots+"칸 · 지금 가장 긴 연속 "+best+"일" : "") : "")+
+    (hasSleep ? dilRow("수면 목표 달성", s, sp, s ? "목표 "+(S.settings.sleepGoal||7)+"시간 이상 "+s.ok+"일 / 기록 "+s.rec+"일" : "") : "");
 }
 
 /* 요약 타일 — 노트 '지표' 표의 묶음마다 한 타일. 묶음이 빈 지표는 타일에 넣지 않는다 */

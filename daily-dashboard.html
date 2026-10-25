@@ -623,6 +623,7 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
 /* ── 시간 추적 ───────────────────────── */
 .tr-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
 .tr-main{display:flex;flex-direction:column;gap:10px;min-width:0}
+.tr-side{min-width:0}
 .tr-side>.subhead:first-child{border-top:none;margin-top:0;padding-top:0}
 .seg{display:inline-flex;align-self:flex-start;border:1px solid var(--rule);border-radius:var(--r-pill);padding:2px;background:var(--paper)}
 .seg button{border:none;background:transparent;border-radius:var(--r-pill);padding:5px 14px;font-size:12px;font-weight:500;color:var(--ink2)}
@@ -645,11 +646,18 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
 .tr-manual{margin-top:2px}
 .tt-task{display:block;font-size:11px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis}
 .tt-pomo{display:inline-block;font:600 9.5px/1 "IBM Plex Mono",monospace;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:1px 3px;margin-right:5px;vertical-align:1px}
+.tt-edit{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;border-bottom:1px solid var(--rule2)}
+.tt-edit input{min-width:0}
+.tt-edit .tt-e-subj{flex:1 1 34%}
+.tt-edit .tt-e-range{flex:1 1 34%;font-family:"IBM Plex Mono",monospace}
+.tt-edit .tt-e-task{flex:1 1 100%}
+.tt-edit .tt-e-btns{display:flex;gap:6px;margin-left:auto}
 .pomo-cfg{gap:10px;flex-wrap:wrap}
 .pomo-cfg label{display:inline-flex;align-items:center;gap:5px}
 .pomo-cfg input{width:64px}
 @media (max-width:820px){
-  .tr-wrap{grid-template-columns:1fr;gap:6px}
+  /* 1fr = minmax(auto,1fr)라 긴 할 일 이름(줄바꿈 안 함)만큼 칸이 넓어져 화면 밖으로 빠졌다 */
+  .tr-wrap{grid-template-columns:minmax(0,1fr);gap:6px}
   .tr-time{font-size:44px}
   /* 공부 탭에서 시간 추적이 복습보다 먼저 보이게 — 데스크톱은 할 일｜복습 짝을 위해 DOM 순서가 반대 */
   #cardReview{order:1}
@@ -2942,9 +2950,20 @@ function trStart(){
 async function trStop(){
   if (!trRun) return;
   const r = trRun; trRun = null; trStore(); trEnsureTick();
-  if (r.phase === "focus") await trSave(r.subject, r.task, r.link, r.phaseStart, Date.now(), r.mode);
-  else renderTracker();
+  const end = Date.now();
+  const willSave = r.phase === "focus" && Math.round((end - r.phaseStart) / 60000) >= 1;
+  /* 기록이 남으면 다음 기록을 위해 할 일 칸을 비운다(과목은 이어서 쓰는 일이 많아 둔다).
+     1분 미만이라 안 남으면 그대로 둔다 — 잘못 누른 경우 다시 시작하기 쉽게.
+     캘린더 기록(네트워크)을 기다리지 않도록 저장보다 먼저 비운다 */
+  if (willSave || r.round) trClearTask();
+  if (r.phase === "focus") await trSave(r.subject, r.task, r.link, r.phaseStart, end, r.mode);
+  renderTracker();   /* 1분 미만이면 trSave가 다시 그리지 않아 '기록 종료' 버튼이 남아 있었다 */
   if (r.mode === "pomo" && r.round) toast("포모도로 " + r.round + "회를 마쳤습니다.");
+}
+function trClearTask(){
+  trPicked = null;
+  document.getElementById("trTask").value = "";
+  document.getElementById("trPick").value = "";
 }
 async function trDiscard(){
   if (!trRun) return;
@@ -3186,25 +3205,86 @@ document.getElementById("sessRange").addEventListener("keydown", e=>{
 /* 그날 기록된 시간 범위를 시간순으로 보여줘서, 하루를 돌아볼 수 있게 한다.
    시작·종료 시각이 있는 기록만 대상 — 옛 데이터 중 시간 없이 분량만 있던
    기록은 과목별 합계에는 잡히지만 타임테이블에는 나타나지 않는다. */
+let ttEdit = null;   /* 타임테이블에서 고치는 중인 기록 { id, subject, task, range } — 아래 '기록 고치기' 참고 */
 function renderTimetable(){
   const date = document.getElementById("sessDate").value || today();
   document.getElementById("ttHead").textContent =
     (date===today() ? "오늘의 타임테이블" : shortDate(date)+" 타임테이블");
   const rows = S.sessions.filter(x=>x.date===date && x.startTime && x.endTime)
     .sort((a,b)=>a.startTime.localeCompare(b.startTime));
-  document.getElementById("ttList").innerHTML = rows.length ? rows.map(x=>{
+  if (ttEdit && !rows.some(x=>x.id===ttEdit.id)) ttEdit = null;
+  const list = document.getElementById("ttList");
+  const hadFocus = ttEdit && list.contains(document.activeElement) ? document.activeElement.dataset.f : null;
+  list.innerHTML = rows.length ? rows.map(x=>{
     const name = subjName(x);
+    if (ttEdit && ttEdit.id === x.id){
+      return '<div class="tt-edit" data-id="'+x.id+'">'+
+        '<input type="text" class="tt-e-subj" data-f="subject" list="trSubjectList" placeholder="과목" aria-label="과목" autocomplete="off" value="'+esc(ttEdit.subject)+'">'+
+        '<input type="text" class="tt-e-range" data-f="range" inputmode="numeric" placeholder="15:55-19:00" aria-label="시간 범위" autocomplete="off" value="'+esc(ttEdit.range)+'">'+
+        '<input type="text" class="tt-e-task" data-f="task" placeholder="할 일" aria-label="할 일" autocomplete="off" value="'+esc(ttEdit.task)+'">'+
+        '<span class="tt-e-btns"><button type="button" class="ghost sm" data-act="cancelsess">취소</button>'+
+        '<button type="button" class="btn sm" data-act="savesess">저장</button></span></div>';
+    }
     return '<div class="tt-row" data-id="'+x.id+'">'+
       '<span class="tt-time">'+x.startTime+'–'+x.endTime+'</span>'+
       '<span class="tt-subj'+(name && name!=="삭제된 과목"?"":" gone")+'">'+esc(name||"과목 없음")+
         (x.task ? '<span class="tt-task">'+esc(x.task)+'</span>' : '')+'</span>'+
       '<span class="tt-dur">'+(x.mode==="pomo" ? '<span class="tt-pomo" title="포모도로">P</span>' : '')+fmtHM(x.minutes)+'</span>'+
-      '<button class="icon-btn" data-act="delsess" title="삭제">×</button></div>';
+      '<button class="icon-btn" data-act="editsess" title="수정" aria-label="수정">✎</button>'+
+      '<button class="icon-btn" data-act="delsess" title="삭제" aria-label="삭제">×</button></div>';
   }).join("") : '<div class="empty">이 날짜에 기록된 시간이 없습니다.</div>';
+  /* 동기화 등으로 다시 그려져도 고치던 칸에 커서를 돌려준다 */
+  if (hadFocus){ const el = list.querySelector('.tt-edit [data-f="'+hadFocus+'"]'); if (el) el.focus(); }
 }
-document.getElementById("sessDate").addEventListener("change", renderTimetable);
+
+/* ── 타임테이블 기록 고치기 — 과목·할 일·시간 범위를 그 줄에서 바로 고친다.
+   입력 중인 값은 ttEdit에 두어, 다른 이유로 목록을 다시 그려도 사라지지 않게 한다 */
+function startSessEdit(id){
+  const x = S.sessions.find(y=>y.id===id); if (!x) return;
+  ttEdit = { id, subject: subjName(x) === "삭제된 과목" ? "" : subjName(x), task: x.task || "",
+    range: x.startTime + "-" + x.endTime };
+  renderTimetable();
+  const el = document.querySelector('#ttList .tt-edit [data-f="task"]');
+  if (el){ el.focus(); try{ el.setSelectionRange(el.value.length, el.value.length); }catch(e){} }
+}
+function cancelSessEdit(){ ttEdit = null; renderTimetable(); }
+function saveSessEdit(){
+  if (!ttEdit) return;
+  const x = S.sessions.find(y=>y.id===ttEdit.id);
+  if (!x){ cancelSessEdit(); return; }
+  const parsed = parseTimeRange(ttEdit.range);
+  if (!parsed){ toast("시간 형식이 올바르지 않습니다. 예: 15:55-19:00"); return; }
+  const subject = ttEdit.subject.trim(), task = ttEdit.task.trim();
+  const changed = subject !== subjName(x) || task !== (x.task||"") ||
+    parsed.startTime !== x.startTime || parsed.endTime !== x.endTime;
+  if (!changed){ cancelSessEdit(); return; }
+  snapUndo(["sessions"]);
+  /* 옛 기록의 subjectId는 글자 과목으로 바꾼다. 할 일 글자를 바꾸면 Tasks.md 항목 연결(taskId)은 끊는다 */
+  if (task !== (x.task||"")) delete x.taskId;
+  delete x.subjectId;
+  Object.assign(x, { subject, task, startTime: parsed.startTime, endTime: parsed.endTime,
+    minutes: parsed.minutes, editedAt: new Date().toISOString() });
+  ttEdit = null;
+  save(); renderAll();
+  const note = S.settings.logSessions ? " 캘린더에 남긴 일정은 그대로입니다." : "";
+  offerUndo("기록을 고쳤습니다." + note);   /* 데스크톱에서는 토스트로만 보인다 */
+}
+document.getElementById("ttList").addEventListener("input", e=>{
+  const f = e.target.dataset && e.target.dataset.f;
+  if (ttEdit && f) ttEdit[f] = e.target.value;
+});
+document.getElementById("ttList").addEventListener("keydown", e=>{
+  if (!ttEdit || !e.target.dataset.f) return;
+  if (e.key === "Enter"){ e.preventDefault(); saveSessEdit(); }
+  else if (e.key === "Escape"){ e.preventDefault(); cancelSessEdit(); }
+});
+document.getElementById("sessDate").addEventListener("change", ()=>{ ttEdit = null; renderTimetable(); });
 document.getElementById("ttList").addEventListener("click", e=>{
-  const btn = e.target.closest('button[data-act="delsess"]'); if(!btn) return;
+  const act = e.target.closest("button[data-act]"); if (!act) return;
+  if (act.dataset.act === "editsess"){ startSessEdit(act.closest(".tt-row").dataset.id); return; }
+  if (act.dataset.act === "savesess"){ saveSessEdit(); return; }
+  if (act.dataset.act === "cancelsess"){ cancelSessEdit(); return; }
+  const btn = act.dataset.act === "delsess" ? act : null; if(!btn) return;
   const id = btn.closest(".tt-row").dataset.id;
   snapUndo(["sessions"]);
   S.sessions = S.sessions.filter(x=>x.id!==id);

@@ -715,7 +715,7 @@ html{scroll-behavior:smooth}body{min-width:320px}.wrap{padding-top:1px}
   <div class="grid">
 
     <!-- 오늘 계획 — vault 주간 틀(주간-틀.md)을 브리지 getRoutine으로 읽어 날짜에 펼친다.
-         블록 아래에 그 과목의 Tasks.md 할 일을 붙이고, 밀리면 최소판·버퍼로·뺌을 고른다.
+         블록 아래에 그 과목의 Tasks.md 할 일을 붙이고, 밀리면 감축·연기·건너뜀을 고른다.
          공개 저장소라 블록 문구는 코드에 두지 않는다. 브리지가 없으면 숨긴다 -->
     <section data-tab="today" class="card wide" id="cardDay" hidden>
       <h2><span id="dayTitle">오늘 계획</span> <span class="mono day-date" id="dayDate">—</span>
@@ -3576,7 +3576,7 @@ function streaks(h){
    요일별 틀의 원본은 vault의 주간-틀.md 하나다. 브리지 getRoutine(v18)이 '블록' 표를
    JSON으로 주고, 이 카드는 그것을 날짜에 펼쳐 구글 일정과 한 시간축에 놓는다.
    - 블록마다 '과목'이 Tasks.md ### 제목과 맞는 열린 할 일을 붙인다(체크는 할 일에).
-   - 밀리면 최소판 / 버퍼로 / 오늘 뺌 — 고른 것은 S.dayPlan[날짜][블록]에 남는다(기기 간 동기화).
+   - 밀리면 감축(최소판 분만) / 연기(다음 버퍼 블록으로) / 건너뜀(오늘만, 할 일은 그대로) — 고른 것은 S.dayPlan[날짜][블록]에 남는다(기기 간 동기화).
    - Tasks.md의 #밀리면뺌 할 일은 '빼기'로 [-] ❌ 날짜 — 밀려서 뺌이 된다(브리지 cancel).
    틀 자체(routineData)는 S에 넣지 않는다 — 원본이 둘이 되지 않게. 마지막으로 읽은 것만
    이 기기 localStorage에 두어 오프라인에서도 보이게 한다. */
@@ -3687,9 +3687,9 @@ function dayBlockHtml(b, d, ctx){
   const target = plan && plan.k === "min" && b.min ? b.min : len;
   const tags = [];
   if (now) tags.push('<span class="db-tag now">지금</span>');
-  if (plan && plan.k === "min") tags.push('<span class="db-tag alt">최소판 '+b.min+'분</span>');
-  if (plan && plan.k === "skip") tags.push('<span class="db-tag alt">오늘 뺌</span>');
-  if (plan && plan.k === "move") tags.push('<span class="db-tag alt">버퍼로 → '+shortDate(plan.to)+' '+DOW[dayDow(plan.to)]+'</span>');
+  if (plan && plan.k === "min") tags.push('<span class="db-tag alt">감축 '+b.min+'분</span>');
+  if (plan && plan.k === "skip") tags.push('<span class="db-tag alt">건너뜀</span>');
+  if (plan && plan.k === "move") tags.push('<span class="db-tag alt">연기 → '+shortDate(plan.to)+' '+DOW[dayDow(plan.to)]+'</span>');
   if (logged && b.kind !== "class") tags.push('<span class="db-tag'+(logged >= target*0.8 ? " ok" : "")+'">기록 '+logged+'분</span>');
 
   const cls = ["db", "k-"+b.kind];
@@ -3718,9 +3718,12 @@ function dayBlockHtml(b, d, ctx){
     } else if (!(isToday && past) || b.kind !== "buffer"){
       if (isToday && !past) acts.push('<button class="btn sm" data-act="dstart">시작</button>');
       if (b.kind !== "buffer"){
-        if (b.min) acts.push('<button class="ghost sm" data-act="dmin">최소판 '+b.min+'분</button>');
-        if (ctx.buffer && b.kind === "study") acts.push('<button class="ghost sm" data-act="dmove" title="'+shortDate(ctx.buffer.date)+' '+esc(ctx.buffer.block.title)+'">버퍼로</button>');
-        acts.push('<button class="ghost sm" data-act="dskip">'+(b.drop ? "오늘 뺌 (먼저 뺄 블록)" : "오늘 뺌")+'</button>');
+        if (b.min) acts.push('<button class="ghost sm" data-act="dmin" title="오늘은 '+b.min+'분만 한다">감축 '+b.min+'분</button>');
+        if (ctx.buffer && b.kind === "study"){
+          const bt = ctx.buffer.block, bd = ctx.buffer.date;
+          acts.push('<button class="ghost sm" data-act="dmove" title="'+esc(shortDate(bd)+' '+DOW[dayDow(bd)]+' '+dayClock(bt.start)+' '+bt.title)+' 블록으로 옮긴다">연기 → '+DOW[dayDow(bd)]+'</button>');
+        }
+        acts.push('<button class="ghost sm" data-act="dskip" title="오늘은 하지 않는다(할 일은 그대로)">'+(b.drop ? "건너뜀 (먼저 뺄 블록)" : "건너뜀")+'</button>');
       }
     }
   }
@@ -3739,7 +3742,7 @@ function dayEventHtml(ev, d, ctx){
     (now ? '<span class="db-tag now">지금</span>' : '')+'</div></div></li>';
 }
 
-/* 이번 주(일~오늘) 공부 블록: 기록이 계획의 80% 이상인 블록 / 계획 블록 · 최소판 · 뺌 · 옮김 */
+/* 이번 주(일~오늘) 공부 블록: 기록이 계획의 80% 이상인 블록 / 계획 블록 · 감축 · 건너뜀 · 연기 */
 function dayWeekStats(){
   const t = today(); let plan = 0, done = 0, min = 0, skip = 0, move = 0;
   for (let d = weekStart(); d <= t; d = addDays(d,1)){
@@ -3807,14 +3810,14 @@ function renderDay(){
   if (pick){
     const v = pl[dayBlockKey(pick)], tk = dayTasksFor(pick, d)[0];
     nowEl.innerHTML = '<span class="dn-lb">'+esc(label)+'</span>'+
-      '<span class="dn-t">'+esc(pick.title)+(v && v.k === "min" ? " — 최소판 "+pick.min+"분" : "")+'</span>'+
+      '<span class="dn-t">'+esc(pick.title)+(v && v.k === "min" ? " — 감축 "+pick.min+"분" : "")+'</span>'+
       (pick.done ? '<span class="dn-s">끝: '+esc(pick.done)+'</span>' : '')+
       (tk ? '<span class="dn-s">할 일: '+esc(trTaskText(tk))+'</span>' : '');
   } else nowEl.innerHTML = dayOffset === 0 ? '<span class="dn-lb">오늘 남은 블록이 없습니다</span>' : "";
 
   const w = dayWeekStats();
   document.getElementById("dayWeek").innerHTML = w.plan
-    ? '이번 주 공부 블록 <b>'+w.done+'/'+w.plan+'</b> 함'+(w.min ? ' · 최소판 '+w.min : '')+(w.skip ? ' · 뺌 '+w.skip : '')+(w.move ? ' · 옮김 '+w.move : '')
+    ? '이번 주 공부 블록 <b>'+w.done+'/'+w.plan+'</b> 함'+(w.min ? ' · 감축 '+w.min : '')+(w.skip ? ' · 건너뜀 '+w.skip : '')+(w.move ? ' · 연기 '+w.move : '')
     : '';
 }
 
@@ -3858,12 +3861,12 @@ document.getElementById("dayLine").addEventListener("click", e=>{
   const d = addDays(today(), dayOffset), key = row.dataset.bkey;
   const b = dayBlocksOn(d).find(x=>dayBlockKey(x) === key); if (!b) return;
   if (act === "dstart") dayStart(b);
-  else if (act === "dmin") daySet(d, key, { k:"min" });
-  else if (act === "dskip") daySet(d, key, { k:"skip" });
+  else if (act === "dmin"){ daySet(d, key, { k:"min" }); toast("'" + b.title + "' 오늘은 " + b.min + "분만 합니다 — 되돌리기로 원래대로"); }
+  else if (act === "dskip"){ daySet(d, key, { k:"skip" }); toast("'" + b.title + "' 오늘은 건너뜁니다(할 일은 그대로) — 되돌리기로 원래대로"); }
   else if (act === "dmove"){
     const buf = dayNextBuffer(d); if (!buf){ toast("7일 안에 버퍼 블록이 없습니다 — 주간-틀.md에 '버퍼' 블록을 넣으세요."); return; }
     daySet(d, key, { k:"move", to: buf.date, title: b.title });
-    toast("'" + b.title + "'을(를) " + shortDate(buf.date) + " " + DOW[dayDow(buf.date)] + " 버퍼로 옮겼습니다.");
+    toast("'" + b.title + "'을(를) " + shortDate(buf.date) + " " + DOW[dayDow(buf.date)] + " " + dayClock(buf.block.start) + "로 연기했습니다.");
   }
   else if (act === "dundo") daySet(d, key, null);
 });

@@ -59,17 +59,6 @@ header.top{padding:26px 0 14px;display:flex;align-items:flex-start;gap:16px;flex
 .dday span{font-size:12px;color:var(--ink2)}
 .dday.far b{color:var(--accent)}
 
-.tape-frame{border-top:1px solid var(--ink);border-bottom:1px solid var(--rule);padding:14px 0 0;margin-bottom:26px}
-.tape-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
-.tape{display:flex;align-items:flex-end;gap:2px;height:108px}
-.col{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:3px;position:relative}
-.col .habit-dot{height:5px;border-radius:1px;background:var(--rule)}
-.col .bar{background:var(--accent);border-radius:1px 1px 0 0;min-height:1px;opacity:.85;transition:opacity .12s}
-.col:hover .bar{opacity:1}
-.col .todo-rule{height:2px;background:var(--rule)}
-.col.today .bar{background:var(--signal)}
-.col.today::after{content:"";position:absolute;bottom:-7px;left:50%;width:1px;height:5px;background:var(--signal)}
-.tape-axis{display:flex;justify-content:space-between;padding:9px 0 12px}
 .tip{position:fixed;z-index:60;background:var(--ink);color:var(--paper);padding:7px 10px;border-radius:var(--r);font-size:11px;pointer-events:none;opacity:0;transition:opacity .1s;font-family:var(--f-num);white-space:pre;line-height:1.5}
 
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -113,7 +102,7 @@ textarea{width:100%;resize:vertical;line-height:1.75}
 .cell.now .dnum{color:var(--m-dl);font-weight:600}
 .cell.sun .dnum{color:var(--m-dl);opacity:.7}
 .marks{display:flex;flex-wrap:wrap;gap:3px;margin-top:auto;align-items:center}
-/* 할 일=사각 점, 시험·마감=원형 점, 구글 일정·복습·기록=색 글자(G/R/W) — 크기 고정 */
+/* 색과 모양을 함께 쓴다 — 할 일=사각, 마감=원, 구글 일정=가로 막대, 복습=마름모, 기록=고리. 크기 고정 */
 .mk{
   display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;
   width:11px;height:11px;min-width:11px;max-width:11px;min-height:11px;max-height:11px;
@@ -401,8 +390,6 @@ li.vt .dday,.db-tasks li .dday{white-space:nowrap;width:auto;min-width:48px;just
   .bar-row{grid-template-columns:66px 1fr 46px}
   .cell{min-height:52px}
   .stats{grid-template-columns:repeat(2,1fr)}
-  .rt-grid{grid-template-columns:26px repeat(7,1fr)}
-  .rt-cell{min-height:16px}
 }
 
 /* ══ 모바일: 하단 탭 · 큰 터치 영역 ══ */
@@ -466,7 +453,6 @@ li.vt .dday,.db-tasks li .dday{white-space:nowrap;width:auto;min-width:48px;just
   --hl:#F7DC5A; --hl-soft:#FCF3C4; --hl-ink:#1A2238;
   --signal:#C93A31; --warn:#A35F17; --ok:#2C7D5B;
   --m-todo:#2C7D5B; --m-ev:#2747B5; --m-dl:#C93A31; --m-rv:#A35F17; --m-jr:#6B4FB0;
-  --rt-anchor:#1A2238; --rt-study:#6B4FB0; --rt-flex:#A35F17; --rt-rest:#8A93A8; --rt-class:#2747B5;
   --grid-line:rgba(39,71,181,.055);
   --shadow:0 1px 0 rgba(26,34,56,.03),0 8px 22px -14px rgba(26,34,56,.22);
   --r:10px; --r-lg:16px; --r-pill:9999px;
@@ -480,7 +466,6 @@ li.vt .dday,.db-tasks li .dday{white-space:nowrap;width:auto;min-width:48px;just
   --hl:#D9BC45; --hl-soft:#3A3421; --hl-ink:#10141F;
   --signal:#FF7B70; --warn:#E6A75C; --ok:#5CC495;
   --m-todo:#5CC495; --m-ev:#8EA6FF; --m-dl:#FF7B70; --m-rv:#E6A75C; --m-jr:#B49CF0;
-  --rt-anchor:#E7EBF5; --rt-study:#B49CF0; --rt-flex:#E6A75C; --rt-rest:#7D879F; --rt-class:#8EA6FF;
   --grid-line:rgba(142,166,255,.045);
   --shadow:0 1px 0 rgba(0,0,0,.25),0 10px 24px -16px rgba(0,0,0,.6);
 }
@@ -491,7 +476,6 @@ li.vt .dday,.db-tasks li .dday{white-space:nowrap;width:auto;min-width:48px;just
     --hl:#D9BC45; --hl-soft:#3A3421; --hl-ink:#10141F;
     --signal:#FF7B70; --warn:#E6A75C; --ok:#5CC495;
     --m-todo:#5CC495; --m-ev:#8EA6FF; --m-dl:#FF7B70; --m-rv:#E6A75C; --m-jr:#B49CF0;
-    --rt-anchor:#E7EBF5; --rt-study:#B49CF0; --rt-flex:#E6A75C; --rt-rest:#7D879F; --rt-class:#8EA6FF;
     --grid-line:rgba(142,166,255,.045);
     --shadow:0 1px 0 rgba(0,0,0,.25),0 10px 24px -16px rgba(0,0,0,.6);
   }
@@ -658,6 +642,44 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 #cardClosing.is-closed>h2{padding-right:84px}
 @keyframes stampIn{0%{opacity:0;transform:rotate(-12deg) scale(1.6)}70%{opacity:1;transform:rotate(-12deg) scale(.94)}100%{transform:rotate(-12deg) scale(1)}}
 
+/* ── 달력 표시: 글자(G/R/W) 대신 색 + 모양 ── */
+.cal-dow div{letter-spacing:0}
+.dl-kind{letter-spacing:0}
+.mk.gcal{background:var(--m-ev);height:4px;min-height:4px;max-height:4px;border-radius:2px}
+.mk.rv{background:var(--m-rv);border-radius:1px;transform:rotate(45deg) scale(.74)}
+.mk.jr{background:transparent;border-radius:50%;box-shadow:inset 0 0 0 2px var(--m-jr)}
+
+/* ── 우선순위: 중요만 눈에 띄게, 보통은 표시 없음 ── */
+.pri{font-family:var(--f-text);font-size:11px;letter-spacing:0;font-weight:600}
+.pri.high{color:var(--signal)}
+.pri.low{color:var(--ink3);opacity:1;font-weight:500}
+
+/* ── 구글 캘린더: 꺼져 있으면 한 줄 ── */
+.gcal-off{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;font-size:13px;color:var(--ink2)}
+.gcal-off[hidden]{display:none}
+.gcal-off>span{flex:1;min-width:200px}
+#cardGcal.is-off .gcal-acts,#cardGcal.is-off #evList,#cardGcal.is-off details.help,#cardGcal.is-off #calStatus{display:none}
+#cardGcal.is-off>h2{margin-bottom:10px}
+
+/* ── 설정 창: 성격별 묶음, 닫기(×), 바닥에 붙는 저장 버튼 ── */
+.sheet{background:rgba(16,20,31,.46)}
+.sheet-in{max-width:560px;margin:48px auto;padding:20px 24px 0;box-shadow:0 24px 60px -20px rgba(16,20,31,.45)}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:2px}
+.sheet-in h3{font-family:var(--f-display);font-size:22px;font-weight:700;margin:0}
+.sheet-x{font-size:22px;min-width:40px;min-height:40px;margin-right:-10px}
+.sheet-x:hover{color:var(--ink)}
+.sheet-group{font-family:var(--f-display);font-size:15px;font-weight:700;color:var(--ink);margin:26px 0 0;padding-top:16px;border-top:1px solid var(--rule)}
+.sheet-head+.sheet-group{border-top:none;padding-top:4px;margin-top:12px}
+.sheet-group+.field{margin-top:10px}
+.field label{font-weight:500;color:var(--ink)}
+.field .mini{font-family:var(--f-text);color:var(--ink2)}
+.sheet-foot{position:sticky;bottom:-20px;   /* .sheet의 안쪽 여백만큼 내려야 화면 바닥에 붙는다 */
+  display:flex;justify-content:flex-end;gap:8px;margin:28px -24px 0;padding:14px 24px;
+  background:var(--card);border-top:1px solid var(--rule2);border-radius:0 0 var(--r-lg) var(--r-lg)}
+.sheet-confirm{max-width:380px;padding-bottom:22px}
+.confirm-msg{margin-top:10px;white-space:pre-line;font-size:13px;color:var(--ink2)}
+.confirm-acts{margin-top:20px;justify-content:flex-end}
+
 /* ── 모바일 하단 탭 · 배지 · 피드백 ── */
 .mnav{box-shadow:0 -6px 20px -12px rgba(26,34,56,.25)}
 .nav-badge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;margin-left:3px;border-radius:999px;background:var(--signal);color:#fff;font:600 10px/1 var(--f-text);font-style:normal;vertical-align:2px}
@@ -669,31 +691,14 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 [data-sync="working"]::before{background:var(--warn);animation:syncPulse 1s ease-in-out infinite}.status[aria-live]{transition:color var(--motion-normal) var(--ease-standard)}
 .is-updated{animation:valuePop 360ms var(--ease-standard)}@keyframes valuePop{0%{transform:scale(1);opacity:.7}55%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}@keyframes syncPulse{50%{opacity:.35;transform:scale(.72)}}
 
-/* generated utility classes: replace legacy inline styles while keeping behavior */
-.u-inline-1{width:0%}
-.u-inline-3{margin-top:6px}
-.u-inline-4{width:88px}
+/* 작은 배치 도우미 — 예전 인라인 style을 옮긴 것 */
+.mt-0{margin-top:0}.mt-4{margin-top:4px}.mt-6{margin-top:6px}.mt-9{margin-top:9px}.mt-12{margin-top:12px}
+.ta-r{text-align:right}.w-full{width:100%}
+.row-split{margin-top:10px;justify-content:space-between}
 .todo-sec{max-width:150px;min-width:0}
-.u-inline-5{display:none}
-.u-inline-6{width:132px}
-.u-inline-7{width:112px}
-.u-inline-8{margin-top:4px}
-.u-inline-9{text-align:right}
-.u-inline-10{margin-top:11px;justify-content:space-between}
-.u-inline-11{margin-top:9px}
-.u-inline-12{background:var(--rt-anchor)}
-.u-inline-13{background:var(--rt-class)}
-.u-inline-14{background:var(--rt-study)}
-.u-inline-15{background:var(--rt-flex)}
-.u-inline-16{background:var(--rt-rest)}
-.u-inline-17{font-size:12px;color:var(--ink2)}
-.u-inline-18{margin-top:9px;justify-content:space-between}
-.u-inline-19{flex:1}
-.u-inline-20{margin-top:12px}
-.u-inline-21{width:100%}
-.u-inline-22{margin-top:0}
-.u-inline-23{width:100px}
-.u-inline-24{margin-top:22px;justify-content:flex-end}
+.sess-date{width:132px}.rv-subj{width:112px}.num-in{width:100px}
+.jr-date{font-size:12px;color:var(--ink2);font-family:var(--f-text)}
+.cap-fill{width:0}
 
 /* ── 반응형 ── */
 @media (max-width:1100px) and (min-width:821px){
@@ -714,6 +719,17 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
   .stat:nth-child(3){border-left:none;padding-left:0}
   .stats{row-gap:14px}
   .close-stamp{width:62px;height:62px;font-size:12px;top:10px;right:12px}
+  /* 돌아보기·일정 탭에서는 머리말을 한 줄로 — 10분 칸은 오늘·공부 탭에서 본다 */
+  body[data-mtab="plan"] .ledger-grid,body[data-mtab="plan"] .ledger-key,body[data-mtab="plan"] .today-summary,
+  body[data-mtab="plan"] .ledger-note,body[data-mtab="plan"] .ledger-go,
+  body[data-mtab="look"] .ledger-grid,body[data-mtab="look"] .ledger-key,body[data-mtab="look"] .today-summary,
+  body[data-mtab="look"] .ledger-note,body[data-mtab="look"] .ledger-go,
+  body[data-mtab="look"] .dday-strip{display:none}
+  body[data-mtab="plan"] .ledger,body[data-mtab="look"] .ledger{padding:10px 14px}
+  body[data-mtab="plan"] .ledger-head,body[data-mtab="look"] .ledger-head{margin:0}
+  body[data-mtab="plan"] .ledger-total b,body[data-mtab="look"] .ledger-total b{font-size:22px}
+  body[data-mtab="plan"] header.top,body[data-mtab="look"] header.top{padding-top:14px;padding-bottom:12px}
+  body[data-mtab="plan"] .today-date,body[data-mtab="look"] .today-date{font-size:28px}
   #cardClosing.is-closed>h2{padding-right:70px}
 }
 @media (max-width:600px){
@@ -722,6 +738,10 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
   .lh{height:22px}
   .lh.lbl-m::after{content:attr(data-h)}
   .ledger-go{margin-left:0}
+  #sheet{padding:0}
+  #sheet .sheet-in{margin:0;min-height:100%;max-width:none;border:none;border-radius:0;padding:16px 16px 0}
+  #sheet .sheet-foot{bottom:0;margin:28px -16px 0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-radius:0}
+  #sheet .sheet-foot .btn{flex:1}
   .today-summary{gap:6px 16px}
   .form-row{flex-direction:column;align-items:stretch;gap:8px}
   .form-row > input,.form-row > select,.form-row > button{width:100%!important;min-width:0}
@@ -955,10 +975,10 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       <div class="cal-grid" id="calGrid"></div>
       <div class="legend">
         <span><i class="mk todo"></i>할 일</span>
-        <span><i class="mk gcal">G</i>구글 일정</span>
+        <span><i class="mk gcal"></i>구글 일정</span>
         <span><i class="mk dl"></i>시험·마감</span>
-        <span><i class="mk rv">R</i>복습</span>
-        <span><i class="mk jr">W</i>기록</span>
+        <span><i class="mk rv"></i>복습</span>
+        <span><i class="mk jr"></i>기록</span>
       </div>
       <div class="daybox" id="dayBox"></div>
     </section>
@@ -982,7 +1002,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
           <span class="mini" id="capText">—</span>
         </div>
         <div class="cap-track">
-          <div class="cap-fill u-inline-1" id="capFill"></div>
+          <div class="cap-fill" id="capFill"></div>
         </div>
         <div class="cap-legend">
           <span class="mini">실적 <b id="capActual">0:00</b></span>
@@ -1028,7 +1048,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
         <button class="btn" id="todoAdd">추가</button>
         <button type="button" class="ghost" id="todoCancelEdit" style="display:none">취소</button>
       </div>
-      <div class="row u-inline-3">
+      <div class="row mt-6">
         <select id="todoPri">
           <option value="normal">보통</option>
           <option value="high">높음</option>
@@ -1079,7 +1099,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
         <span class="eyebrow" id="todoScopeLabel"></span>
       </div>
       <ul class="list" id="todoList"></ul>
-      <details class="done-section u-inline-5" id="doneTodosWrap">
+      <details class="done-section" id="doneTodosWrap" style="display:none">
         <summary id="doneTodosHead">완료한 할 일</summary>
         <ul class="list" id="doneTodoList"></ul>
       </details>
@@ -1089,10 +1109,10 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
     <section data-tab="study" class="card" id="cardReview">
       <h2>복습 <span class="count due" id="reviewDue" aria-live="polite">0</span><span class="count" id="reviewTotal" aria-live="polite">0</span></h2>
       <div class="row form-row">
-        <input type="text" id="rvSubject" class="u-inline-7" list="trSubjectList" placeholder="과목" aria-label="과목" autocomplete="off">
+        <input type="text" id="rvSubject" class="rv-subj" list="trSubjectList" placeholder="과목" aria-label="과목" autocomplete="off">
         <input type="text" id="rvContent" class="grow" placeholder="질문 — 예: MLE의 정의는?">
       </div>
-      <div class="row form-row u-inline-3">
+      <div class="row form-row mt-6">
         <input type="text" id="rvAnswer" class="grow" placeholder="답 (비워둬도 됩니다) — 예: 우도함수를 최대화하는 θ">
         <button class="btn" id="rvAdd">추가</button>
       </div>
@@ -1148,8 +1168,8 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
           <div class="tr-after" id="trAfter" hidden aria-live="polite"></div>
           <details class="help tr-manual">
             <summary>지난 시간 직접 적기</summary>
-            <div class="row form-row u-inline-3">
-              <input type="date" id="sessDate" class="u-inline-6" aria-label="날짜">
+            <div class="row form-row mt-6">
+              <input type="date" id="sessDate" class="sess-date" aria-label="날짜">
               <input type="text" id="sessRange" class="grow" placeholder="예: 15:55-19:00" aria-label="시간 범위">
               <button class="btn" id="sessAdd">기록</button>
             </div>
@@ -1172,7 +1192,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
         <input type="text" id="habitName" class="grow" placeholder="습관 이름 (예: 기상 7시)">
         <button class="btn" id="habitAdd">추가</button>
       </div>
-      <div id="habitList" class="u-inline-8"></div>
+      <div id="habitList" class="mt-4"></div>
     </section>
 
     <!-- 수면 -->
@@ -1183,14 +1203,14 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       </h2>
       <div class="sleep-row head">
         <span class="eyebrow">날짜</span><span class="eyebrow">취침</span>
-        <span class="eyebrow">기상</span><span class="eyebrow u-inline-9">수면</span>
+        <span class="eyebrow">기상</span><span class="eyebrow ta-r">수면</span>
       </div>
       <div id="sleepList"></div>
-      <div class="row u-inline-10">
+      <div class="row row-split">
         <span class="mini">최근 7일 평균 <b id="sleepAvg">—</b></span>
         <span class="mini" id="sleepNote"></span>
       </div>
-      <div class="hint u-inline-11">
+      <div class="hint mt-9">
         저녁에 잠들었다면 그날 칸에, 자정을 넘겨 잠들었다면 다음날 칸에 취침 시각을 적으면 됩니다.
         어느 쪽이든 그날 기상 시각과 짝지어 계산합니다.
       </div>
@@ -1229,13 +1249,13 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 
     <!-- 기록 -->
     <section data-tab="look" class="card wide" id="cardJournal">
-      <h2>기록 <span class="mono u-inline-17" id="jrDate">—</span>
+      <h2>기록 <span class="mono jr-date" id="jrDate">—</span>
         <span class="spacer"></span>
         <span class="eyebrow" id="jrSaved"></span>
         <button class="ghost sm" id="jrToday">오늘로</button>
       </h2>
       <textarea id="journal" rows="7" placeholder="오늘 어땠나요? 무엇이 잘 됐고, 무엇이 막혔고, 내일은 무엇을 다르게 할지 적어보세요."></textarea>
-      <div class="row u-inline-18">
+      <div class="row row-split">
         <span class="mini" id="jrCount">—</span>
         <span class="mini" id="jrStreak"></span>
       </div>
@@ -1248,14 +1268,18 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
         <span class="spacer"></span>
         <span class="status" id="calStatus" aria-live="polite"><span class="dot"></span>연결 안 됨</span>
       </h2>
-      <div class="row">
+      <div class="gcal-off" id="gcalOff" hidden>
+        <span>구글 캘린더 연동을 쓰지 않는 중입니다. 켜면 일정이 달력과 오늘 계획에 함께 나옵니다.</span>
+        <button type="button" class="ghost sm" id="gcalOffOpen">설정에서 켜기</button>
+      </div>
+      <div class="row gcal-acts">
         <button class="btn sm" id="calConnect">연결 확인</button>
         <button class="ghost" id="calRefresh">새로고침</button>
         <button class="ghost" id="calPush">할 일을 캘린더로 보내기</button>
-        <span class="u-inline-19"></span>
+        <span class="grow"></span>
         <label class="switch"><input type="checkbox" id="logSessions"> 공부 기록도 캘린더에 남기기</label>
       </div>
-      <div id="evList" class="u-inline-20">
+      <div id="evList" class="mt-12">
         <div class="empty">설정에서 연동을 마치면 앞으로 7일간의 일정이 표시되고, 위 달력에도 함께 나타납니다.</div>
       </div>
       <details class="help">
@@ -1278,10 +1302,13 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 </div>
 
 <div class="sheet" id="sheet">
-  <div class="sheet-in">
-    <h3>설정</h3>
-    <div class="eyebrow">대시보드 · 데이터 · 연동</div>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-head">
+      <h3 id="sheetTitle">설정</h3>
+      <button type="button" class="icon-btn sheet-x" id="sheetX" aria-label="저장하고 닫기" title="저장하고 닫기">×</button>
+    </div>
 
+    <h4 class="sheet-group">화면</h4>
     <div class="field theme-field">
       <label for="cfgTheme">테마</label>
       <select id="cfgTheme">
@@ -1292,54 +1319,15 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       <div class="hint">시스템 설정을 선택하면 기기의 다크 모드 설정을 따라갑니다.</div>
     </div>
 
-    <div class="field">
-      <label for="cfgMode">캘린더 연동 방식</label>
-      <select id="cfgMode" class="u-inline-21">
-        <option value="script">간편 연동 · Apps Script (콘솔 불필요)</option>
-        <option value="oauth">직접 연동 · OAuth 클라이언트 ID</option>
-        <option value="off">사용 안 함</option>
-      </select>
-    </div>
-
-    <div class="modebox" id="boxScript">
-      <div class="field u-inline-22">
-        <label for="cfgScriptUrl">웹 앱 URL</label>
-        <input type="url" id="cfgScriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
-      </div>
-      <div class="field">
-        <label for="cfgScriptToken">토큰</label>
-        <input type="text" id="cfgScriptToken" placeholder="스크립트에 적어둔 비밀 문자열">
-        <div class="hint">URL을 아는 사람의 접근을 막는 열쇠입니다. 짐작하기 어려운 긴 문자열로 정하고, 어디에도 공유하지 마세요.</div>
-      </div>
-    </div>
-
-    <div class="modebox" id="boxOauth">
-      <div class="field u-inline-22">
-        <label for="cfgClientId">구글 OAuth 클라이언트 ID</label>
-        <input type="text" id="cfgClientId" placeholder="000000-xxxxx.apps.googleusercontent.com">
-      </div>
-    </div>
-
-    <div class="field">
-      <label for="cfgDuration">시간이 지정된 할 일의 기본 길이 (분)</label>
-      <input type="number" id="cfgDuration" min="5" max="600" step="5" class="u-inline-23">
-    </div>
-
-    <div class="field">
-      <label for="cfgSleepGoal">목표 수면시간 (시간)</label>
-      <input type="number" id="cfgSleepGoal" min="4" max="12" step="0.5" class="u-inline-23">
-      <div class="hint">이보다 짧게 잔 날은 수면 기록에서 다른 색으로 표시됩니다.</div>
-    </div>
-
+    <h4 class="sheet-group">공부</h4>
     <div class="field">
       <label for="cfgWeeklyCap">주간 공부시간 상한 (시간)</label>
-      <input type="number" id="cfgWeeklyCap" min="5" max="80" step="1" class="u-inline-23">
+      <input type="number" id="cfgWeeklyCap" min="5" max="80" step="1" class="num-in">
       <div class="hint">
         주간 리뷰의 게이지 기준입니다. 이번 주 공부시간이 이 값을 넘으면 빨간색으로 바뀝니다.
         학기 중 6과목 기준 25시간 안팎이 지킬 수 있는 상한입니다.
       </div>
     </div>
-
     <div class="field">
       <label for="cfgPomoWork">포모도로 (분)</label>
       <div class="row pomo-cfg">
@@ -1350,24 +1338,15 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       </div>
       <div class="hint">시간 추적에서 '포모도로'를 고르면 집중 구간마다 기록이 남고, 끝날 때 소리·진동으로 알립니다.</div>
     </div>
-
     <div class="field">
       <label for="cfgIntervals">복습 간격 (일, 쉼표로 구분)</label>
       <input type="text" id="cfgIntervals" placeholder="1, 3, 7, 16, 35">
       <div class="hint">복습에 성공할 때마다 다음 간격으로 넘어갑니다. 실패하면 처음으로 돌아갑니다.</div>
     </div>
 
+    <h4 class="sheet-group">시험·마감 D-day</h4>
     <div class="field">
-      <label for="cfgImportJson">복습 질문 · D-day JSON 붙여넣기</label>
-      <textarea id="cfgImportJson" rows="4" placeholder='{"reviews":[{"subject":"","q":"","a":""}],"deadlines":[{"title":"","date":"2026-12-10"}]}'></textarea>
-      <div class="row u-inline-3">
-        <button class="ghost" id="importApplyJson">붙여넣은 내용 적용</button>
-      </div>
-      <div class="hint">예전 계획 JSON도 그대로 붙여 넣을 수 있습니다. 공부 계획(plans)은 건너뜁니다 — 계획은 Tasks.md에서 관리합니다.</div>
-    </div>
-
-    <div class="field">
-      <label>시험 · 마감 (D-day)</label>
+      <label for="ddTitle">시험·마감 추가</label>
       <div class="row">
         <input type="text" id="ddTitle" class="grow" placeholder="이름 (예: 기말고사)">
         <input type="date" id="ddDate">
@@ -1376,17 +1355,43 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       <ul class="list" id="ddList"></ul>
     </div>
 
+    <h4 class="sheet-group">생활</h4>
     <div class="field">
-      <label>데이터</label>
-      <div class="row">
-        <button class="ghost" id="btnExport">JSON 내보내기</button>
-        <button class="ghost" id="btnImport">JSON 불러오기</button>
-        <button class="ghost" id="btnIcs">캘린더 파일(.ics) 내보내기</button>
-        <input type="file" id="fileImport" accept="application/json" hidden>
-      </div>
-      <div class="hint">브라우저 저장소에 보관됩니다. 기기를 옮기거나 브라우저 데이터를 지우기 전에 내보내 두세요.</div>
+      <label for="cfgSleepGoal">목표 수면시간 (시간)</label>
+      <input type="number" id="cfgSleepGoal" min="4" max="12" step="0.5" class="num-in">
+      <div class="hint">이보다 짧게 잔 날은 수면 기록에서 다른 색으로 표시됩니다.</div>
     </div>
 
+    <h4 class="sheet-group">캘린더·동기화</h4>
+    <div class="field">
+      <label for="cfgMode">캘린더 연동 방식</label>
+      <select id="cfgMode" class="w-full">
+        <option value="script">간편 연동 · Apps Script (콘솔 불필요)</option>
+        <option value="oauth">직접 연동 · OAuth 클라이언트 ID</option>
+        <option value="off">사용 안 함</option>
+      </select>
+    </div>
+    <div class="modebox" id="boxScript">
+      <div class="field mt-0">
+        <label for="cfgScriptUrl">웹 앱 URL</label>
+        <input type="url" id="cfgScriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+      </div>
+      <div class="field">
+        <label for="cfgScriptToken">토큰</label>
+        <input type="text" id="cfgScriptToken" placeholder="스크립트에 적어둔 비밀 문자열">
+        <div class="hint">URL을 아는 사람의 접근을 막는 열쇠입니다. 짐작하기 어려운 긴 문자열로 정하고, 어디에도 공유하지 마세요.</div>
+      </div>
+    </div>
+    <div class="modebox" id="boxOauth">
+      <div class="field mt-0">
+        <label for="cfgClientId">구글 OAuth 클라이언트 ID</label>
+        <input type="text" id="cfgClientId" placeholder="000000-xxxxx.apps.googleusercontent.com">
+      </div>
+    </div>
+    <div class="field">
+      <label for="cfgDuration">시간을 넣은 할 일의 일정 길이 (분)</label>
+      <input type="number" id="cfgDuration" min="5" max="600" step="5" class="num-in">
+    </div>
     <div class="field">
       <label>기기 간 동기화</label>
       <div class="row">
@@ -1396,17 +1401,37 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       <div class="hint">위 캘린더 연동(간편 연동 · Apps Script)을 설정해 두면, 데이터 전체가 그 웹 앱을 통해 자동으로 저장되고 다른 기기와 동기화됩니다. 새 기기에서는 같은 웹 앱 URL과 토큰만 입력하면 최신 데이터를 받아옵니다.</div>
     </div>
 
-    <div class="row u-inline-24">
+    <h4 class="sheet-group">데이터</h4>
+    <div class="field">
+      <label>백업 파일</label>
+      <div class="row">
+        <button class="ghost" id="btnExport">JSON 내보내기</button>
+        <button class="ghost" id="btnImport">JSON 불러오기</button>
+        <button class="ghost" id="btnIcs">캘린더 파일(.ics) 내보내기</button>
+        <input type="file" id="fileImport" accept="application/json" hidden>
+      </div>
+      <div class="hint">브라우저 저장소에 보관됩니다. 기기를 옮기거나 브라우저 데이터를 지우기 전에 내보내 두세요.</div>
+    </div>
+    <div class="field">
+      <label for="cfgImportJson">복습 질문·D-day 한꺼번에 넣기 (JSON)</label>
+      <textarea id="cfgImportJson" rows="4" placeholder='{"reviews":[{"subject":"","q":"","a":""}],"deadlines":[{"title":"","date":"2026-12-10"}]}'></textarea>
+      <div class="row mt-6">
+        <button class="ghost" id="importApplyJson">붙여넣은 내용 적용</button>
+      </div>
+      <div class="hint">예전 계획 JSON도 그대로 붙여 넣을 수 있습니다. 공부 계획(plans)은 건너뜁니다 — 계획은 Tasks.md에서 관리합니다.</div>
+    </div>
+
+    <div class="sheet-foot">
       <button class="btn" id="sheetClose">저장하고 닫기</button>
     </div>
   </div>
 </div>
 
 <div class="sheet" id="confirmSheet">
-  <div class="sheet-in" style="max-width:380px">
+  <div class="sheet-in sheet-confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMsg">
     <h3 id="confirmTitle">확인</h3>
-    <div class="hint" id="confirmMsg" style="margin-top:10px;white-space:pre-line"></div>
-    <div class="row" style="margin-top:20px;justify-content:flex-end">
+    <div class="hint confirm-msg" id="confirmMsg"></div>
+    <div class="row confirm-acts">
       <button class="ghost" id="confirmCancel">취소</button>
       <button class="btn" id="confirmOk">확인</button>
     </div>
@@ -1694,6 +1719,36 @@ function confirmDialog(msg){
     okBtn.focus();
   });
 }
+/* 대화상자 접근성 — 설정·확인 창이 열려 있는 동안 뒤 화면은 inert로 막아 Tab·낭독기가
+   빠져나가지 않게 한다. 확인 창이 설정 위에 뜨면 설정도 막는다. 닫히면 열기 전 포커스로 돌아간다 */
+(function(){
+  const sheets = [document.getElementById("sheet"), document.getElementById("confirmSheet")];
+  const back = [document.querySelector(".wrap"), document.getElementById("mnav")];
+  const returnTo = new Map();
+  /* 확인 창은 열자마자 '확인'에 포커스를 준다 — 그 전에 있던 자리를 알기 위해 직전 포커스를 둔다 */
+  let cur = null, prev = null;
+  document.addEventListener("focusin", e=>{ prev = cur; cur = e.target; });
+  const FOCUSABLE = 'button:not([disabled]),select,input:not([type=hidden]):not([hidden]),textarea,[tabindex]:not([tabindex="-1"])';
+  function sync(){
+    const open = sheets.filter(x=>x.classList.contains("on"));
+    back.forEach(el=>{ if (el) el.inert = open.length > 0; });
+    sheets[0].inert = sheets[0].classList.contains("on") && sheets[1].classList.contains("on");
+  }
+  const mo = new MutationObserver(recs=>recs.forEach(r=>{
+    const el = r.target, on = el.classList.contains("on"), was = (r.oldValue||"").split(/\s+/).includes("on");
+    if (on === was) return;
+    if (on){
+      returnTo.set(el, el.contains(document.activeElement) ? prev : document.activeElement);
+      sync();
+      if (!el.contains(document.activeElement)){ const f = el.querySelector(FOCUSABLE); if (f) f.focus(); }
+    } else {
+      sync();
+      const r0 = returnTo.get(el); returnTo.delete(el);
+      if (r0 && document.contains(r0) && !r0.closest("[inert]")) r0.focus();
+    }
+  }));
+  sheets.forEach(el=>mo.observe(el, { attributes:true, attributeFilter:["class"], attributeOldValue:true }));
+})();
 document.getElementById("confirmSheet").addEventListener("click", e=>{
   if (e.target.id==="confirmSheet") document.getElementById("confirmCancel").click();
 });
@@ -1846,14 +1901,17 @@ function renderCalendar(){
     const nRv = S.reviews.filter(r=>r.nextDue===d).length;
     const hasJr = !!(S.journal[d] && S.journal[d].trim());
     const marks =
-      (nTodo?'<i class="mk todo"></i>':"")+(nEv?'<i class="mk gcal">G</i>':"")+
-      (nDl?'<i class="mk dl"></i>':"")+(nRv?'<i class="mk rv">R</i>':"")+
-      (hasJr?'<i class="mk jr">W</i>':"");
+      (nTodo?'<i class="mk todo"></i>':"")+(nEv?'<i class="mk gcal"></i>':"")+
+      (nDl?'<i class="mk dl"></i>':"")+(nRv?'<i class="mk rv"></i>':"")+
+      (hasJr?'<i class="mk jr"></i>':"");
     const title = [nTodo?"할 일 "+nTodo:"", nEv?"일정 "+nEv:"", nDl?"마감 "+nDl:"",
                    nRv?"복습 "+nRv:"", hasJr?"기록 있음":""].filter(Boolean).join(" · ");
     const dow = new Date(d+"T00:00:00").getDay();
+    /* 낭독기는 숫자만 읽었다 — 날짜·요일·오늘 여부와 그날의 내용을 함께 들려준다 */
+    const aria = Number(d.slice(5,7))+"월 "+Number(d.slice(8))+"일 "+DOW[dow]+"요일"+(d===t?", 오늘":"")+(title ? ", "+title : "");
     return '<button class="cell'+(inMonth?"":" out")+(d===t?" now":"")+
-      (d===selectedDate?" sel":"")+(dow===0?" sun":"")+'" data-d="'+d+'" title="'+esc(title)+'">'+
+      (d===selectedDate?" sel":"")+(dow===0?" sun":"")+'" data-d="'+d+'" title="'+esc(title)+'" aria-label="'+esc(aria)+'"'+
+      (d===selectedDate?' aria-pressed="true"':' aria-pressed="false"')+(d===t?' aria-current="date"':'')+'>'+
       '<span class="dnum">'+Number(d.slice(8))+'</span>'+
       '<span class="marks">'+marks+'</span></button>';
   }).join("");
@@ -2136,7 +2194,7 @@ function renderReviews(){
     ? due.map(r=>rvItemHtml(r,true)).join("")
     : (S.reviews.length
         ? '<div class="empty">오늘 몫은 끝났습니다. 오늘 배운 것에서 질문을 하나 더 뽑아 두세요.</div>'
-        : '<div class="empty">아직 등록된 질문이 없습니다.<br>위 &lsquo;어떻게 쓰나요?&rsquo;를 펼쳐 보세요.</div>');
+        : '<div class="empty">아직 등록된 질문이 없습니다.<br>위 &lsquo;복습 사용법&rsquo;을 펼쳐 보세요.</div>');
   document.getElementById("rvSoonHead").textContent = "예정" + (soon.length ? " " + soon.length + "개" : "");
   document.getElementById("rvSoonList").innerHTML = soon.length
     ? soon.map(r=>rvItemHtml(r,false)).join("")
@@ -2224,8 +2282,8 @@ function vaultRowHtml(x){
   if (x.section) meta.push('<span class="sec">'+esc(x.subsection ? x.section+" › "+trCleanHead(x.subsection) : x.section)+'</span>');
   if (x.due) meta.push('<span class="due">'+shortDate(x.due)+'</span>');
   else if (x.scheduled) meta.push('<span class="at">예정 '+shortDate(x.scheduled)+'</span>');
-  if (x.priority === "high") meta.push('<span class="pri high">HIGH</span>');
-  else if (x.priority === "low") meta.push('<span class="pri low">LOW</span>');
+  if (x.priority === "high") meta.push('<span class="pri high">중요</span>');
+  else if (x.priority === "low") meta.push('<span class="pri low">낮음</span>');
   if (x.recurrence) meta.push('<span class="tag">'+esc(x.recurrence)+'</span>');
   if (x.status === "done" && x.doneOn) meta.push('<span class="at">완료 '+shortDate(x.doneOn)+'</span>');
   if (x.status === "cancelled") meta.push('<span class="at">취소</span>');
@@ -2252,6 +2310,12 @@ function renderVaultTasks(){
   renderTrPick();      /* 시간 추적의 고르기 목록도 같은 미완료 항목을 쓴다 */
   try{ renderDay(); }catch(err){ console.error("렌더 오류: renderDay", err); }   /* 블록 아래 할 일 */
   renderPlanMigrate();
+
+  /* 브리지(간편 연동 + 웹 앱 URL)가 없으면 Tasks.md를 읽지 않는다 — '불러오는 중…'으로
+     기다리는 것처럼 보이지 않게 칸을 접는다. 할 일은 아래 '대시보드 할 일'에 쌓인다 */
+  const vaultWrap = document.getElementById("vaultWrap");
+  vaultWrap.hidden = !goalsLinked();
+  if (vaultWrap.hidden) return;
 
   if (vaultErr){
     statEl.textContent = "불러오기 실패";
@@ -3106,12 +3170,13 @@ function visibleTodos(){
 }
 function todoRowHtml(td){
   const t = today();
-  const priLabel = { high:"HIGH", normal:"NORM", low:"LOW" }[td.priority] || "NORM";
+  /* 보통은 표시하지 않는다 — 모든 줄에 꼬리표가 붙으면 중요한 것이 묻힌다 */
+  const priLabel = { high:"중요", low:"낮음" }[td.priority] || "";
   const over = td.due && td.due<t && !td.done;
   return '<li class="'+(td.done?"done":"")+'" data-id="'+td.id+'">'+
     '<button class="check '+(td.done?"on":"")+'" data-act="toggle" aria-label="완료 표시"></button>'+
     '<div class="t-body"><div class="t-text">'+esc(td.text)+'</div><div class="t-meta">'+
-      '<span class="pri '+td.priority+'">'+priLabel+'</span>'+
+      (priLabel ? '<span class="pri '+td.priority+'">'+priLabel+'</span>' : "")+
       (td.tag?'<span class="tag'+(td.gcalId?" gcal":"")+'">'+esc(td.tag)+'</span>':"")+
       (td.due?'<span class="due'+(over?" over":"")+'">'+shortDate(td.due)+'</span>':"")+
       (td.time?'<span class="at">'+td.time+'</span>':"")+
@@ -4539,6 +4604,11 @@ const API = "https://www.googleapis.com/calendar/v3/calendars/primary/events";
 let tokenClient = null, accessToken = null, pendingResolve = null;
 
 function mode(){ return S.settings.calMode || "script"; }
+/* 캘린더를 실제로 읽을 수 있는 설정인지 — 방식만 고르고 URL·클라이언트 ID가 비면 false */
+function calConfigured(){
+  const m = mode();
+  return (m === "script" && !!(S.settings.scriptUrl||"").trim()) || (m === "oauth" && !!(S.settings.clientId||"").trim());
+}
 function setCalStatus(text, kind){
   document.getElementById("calStatus").innerHTML =
     '<span class="dot'+(kind==="live"?" live":kind==="err"?" err":"")+'"></span>'+esc(text);
@@ -4547,6 +4617,10 @@ function renderModeLabel(){
   const m = mode();
   document.getElementById("calMode").textContent =
     m==="script" ? "간편 연동" : m==="oauth" ? "직접 연동" : "사용 안 함";
+  const card = document.getElementById("cardGcal");
+  if (card) card.classList.toggle("is-off", m==="off");
+  const off = document.getElementById("gcalOff");
+  if (off) off.hidden = m!=="off";
 }
 async function scriptCall(payload){
   const url = (S.settings.scriptUrl||"").trim();
@@ -4699,7 +4773,8 @@ function calScopeDays(){
 function renderCalToday(){
   const wrap = document.getElementById("calTodayWrap");
   if (!wrap) return;
-  if (mode()==="off" || scope==="nodate"){ wrap.style.display = "none"; return; }   /* 날짜 없음 탭에 일정은 없다 */
+  /* 날짜 없음 탭에 일정은 없다. 연동이 꺼졌거나 아직 설정이 비어 있으면 기다릴 것도 없다 */
+  if (!calConfigured() || scope==="nodate"){ wrap.style.display = "none"; return; }
   wrap.style.display = "";
   const t = today(), days = calScopeDays(), multi = days.length > 1;
   const now = new Date(), nowMin = now.getHours()*60 + now.getMinutes();
@@ -4937,6 +5012,12 @@ function openSheet(){
 }
 document.getElementById("cfgMode").addEventListener("change", syncModeBoxes);
 document.getElementById("btnSettings").addEventListener("click", openSheet);
+document.getElementById("gcalOffOpen").addEventListener("click", ()=>{
+  openSheet();
+  const el = document.getElementById("cfgMode");
+  el.scrollIntoView({block:"center"}); el.focus();
+});
+document.getElementById("sheetX").addEventListener("click", ()=>document.getElementById("sheetClose").click());
 document.getElementById("sheetClose").addEventListener("click", async ()=>{
   S.settings.calMode = document.getElementById("cfgMode").value;
   S.settings.theme = document.getElementById("cfgTheme").value || "system";
@@ -5009,8 +5090,12 @@ function applyTheme(){
   else document.documentElement.setAttribute("data-theme", theme);
   const btn = document.getElementById("btnTheme");
   if (btn){
-    btn.textContent = theme === "system" ? "시스템 테마" : (theme === "dark" ? "어두운 모드" : "밝은 모드");
-    btn.setAttribute("aria-label", "테마 변경 · 현재 " + btn.textContent);
+    /* 버튼은 지금 상태를 보여 주고, 누르면 시스템 → 밝게 → 어둡게 순서로 바뀐다 */
+    const name = { system:"시스템", light:"밝게", dark:"어둡게" };
+    const next = { system:"light", light:"dark", dark:"system" }[theme] || "light";
+    btn.textContent = "테마: " + (name[theme] || "시스템");
+    btn.title = "누르면 '" + name[next] + "'로 바뀝니다";
+    btn.setAttribute("aria-label", "테마 " + (name[theme] || "시스템") + ", 누르면 " + name[next] + "로 바꿈");
   }
 }
 document.getElementById("btnTheme").addEventListener("click", ()=>{

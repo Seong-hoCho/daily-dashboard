@@ -134,7 +134,7 @@ textarea{width:100%;resize:vertical;line-height:1.75}
 .dl-kind.k-ev{color:var(--m-ev)} .dl-kind.k-todo{color:var(--m-todo)}
 .dl-kind.k-dl{color:var(--m-dl)} .dl-kind.k-rv{color:var(--m-rv)}
 .dl-kind.k-etc{color:var(--ink3)}
-.dl-kind.k-vault{color:var(--m-dl)}
+.dl-kind.k-vault{color:var(--m-todo)}
 .dl-item .txt{flex:1;word-break:keep-all;overflow-wrap:break-word}
 
 /* ── 과목 칩 ────────────────────────────── */
@@ -202,6 +202,7 @@ li.done .t-text{color:var(--ink3);text-decoration:line-through}
 .pri{font-family:var(--f-num);font-size:10px;letter-spacing:.1em;font-weight:600}
 .pri.high{color:var(--signal)} .pri.normal{color:var(--ink3)} .pri.low{color:var(--ink3);opacity:.6}
 .tag{font-size:11px;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:20px}
+.tag.dl{color:var(--m-dl);background:transparent;border:1px solid var(--m-dl)}
 .tag.gcal{color:var(--m-ev);background:transparent;border:1px solid var(--m-ev)}
 .due{font-family:var(--f-num);font-size:11px;color:var(--ink3)}
 .due.over{color:var(--warn)}
@@ -1039,7 +1040,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
         <input type="date" id="todoDue">
         <button type="button" class="ghost sm" id="todoTomorrow" title="마감일을 내일로 설정">내일</button>
         <input type="time" id="todoTime" title="시간을 넣으면 할 일이 아니라 구글 캘린더 일정으로 등록합니다">
-        <label class="chk" title="마감(D-day) 항목이면 #deadline 태그를 붙입니다"><input type="checkbox" id="todoDeadline">마감</label>
+        <label class="chk" title="시험·제출처럼 날짜가 정해진 마감이면 체크 — Tasks.md에 #deadline을 붙이고, 달력 빨간 점과 머리말 D-day에 나타납니다"><input type="checkbox" id="todoDeadline">마감</label>
       </div>
       <div class="tabs">
         <button class="tab on" data-scope="today">오늘</button>
@@ -1724,14 +1725,19 @@ function renderHeader(){
   dateEl.textContent = (d.getMonth()+1)+"월 "+d.getDate()+"일";
   dateEl.title = ymd(d);
   const t = today();
-  const list = S.deadlines.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  /* 설정의 시험·마감 + Tasks.md의 #deadline 할 일(오늘 이후). 이름·날짜가 같으면 하나만 */
+  const seen = new Set(S.deadlines.map(dd=>dd.date+"|"+dd.title.trim()));
+  const list = S.deadlines.concat(vaultDeadlines().filter(x=>x.due>=t)
+      .map(x=>({ title: trTaskText(x).replace(/(^|\s)#[^\s#]+/g,"").trim(), date: x.due }))
+      .filter(x=>!seen.has(x.date+"|"+x.title)))
+    .sort((a,b)=>a.date.localeCompare(b.date));
   document.getElementById("ddayStrip").innerHTML = list.length
     ? list.map(dd=>{
         const n = diffDays(t, dd.date);
         const label = n===0?"D-DAY":n>0?"D-"+n:"D+"+Math.abs(n);
         return '<span class="dday'+(n>14?" far":"")+'"><b>'+label+'</b><span>'+esc(dd.title)+'</span></span>';
       }).join("")
-    : '<span class="eyebrow">설정에서 시험·마감일을 등록해 보세요</span>';
+    : '<span class="eyebrow">설정에서 시험·마감일을 등록하거나, 할 일을 추가할 때 \'마감\'을 체크해 보세요</span>';
 }
 
 function dayStats(date){
@@ -1832,9 +1838,10 @@ function renderCalendar(){
   document.getElementById("calLabel").textContent = calMonth.replace("-",".");
   document.getElementById("calGrid").innerHTML = days.map(d=>{
     const inMonth = d.slice(0,7)===calMonth;
-    const nTodo = S.todos.filter(x=>x.due===d && !x.done).length;
+    const vOpen = vaultTasks.filter(x=>x.due===d && x.status==="todo");
+    const nVt = vOpen.filter(vtIsDeadline).length;
+    const nTodo = S.todos.filter(x=>x.due===d && !x.done).length + vOpen.length - nVt;
     const nEv = eventsOn(d).length;                      /* 가져온 일정은 제외 */
-    const nVt = vaultTasks.filter(x=>x.due===d && x.status==="todo").length;
     const nDl = S.deadlines.filter(x=>x.date===d).length + nVt;
     const nRv = S.reviews.filter(r=>r.nextDue===d).length;
     const hasJr = !!(S.journal[d] && S.journal[d].trim());
@@ -1842,7 +1849,7 @@ function renderCalendar(){
       (nTodo?'<i class="mk todo"></i>':"")+(nEv?'<i class="mk gcal">G</i>':"")+
       (nDl?'<i class="mk dl"></i>':"")+(nRv?'<i class="mk rv">R</i>':"")+
       (hasJr?'<i class="mk jr">W</i>':"");
-    const title = [nTodo?"할 일 "+nTodo:"", nEv?"일정 "+nEv:"", nDl?"마감 "+nDl+(nVt?"(볼트 "+nVt+")":""):"",
+    const title = [nTodo?"할 일 "+nTodo:"", nEv?"일정 "+nEv:"", nDl?"마감 "+nDl:"",
                    nRv?"복습 "+nRv:"", hasJr?"기록 있음":""].filter(Boolean).join(" · ");
     const dow = new Date(d+"T00:00:00").getDay();
     return '<button class="cell'+(inMonth?"":" out")+(d===t?" now":"")+
@@ -1888,7 +1895,7 @@ function renderDayBox(){
 
   let rows = "";
   dls.forEach(x=>rows+='<div class="dl-item"><span class="dl-kind k-dl">마감</span><span class="txt">'+esc(x.title)+'</span></div>');
-  vaultOn(d).forEach(x=>rows+='<div class="dl-item"><span class="dl-kind k-vault">볼트</span><span class="txt">'+
+  vaultOn(d).forEach(x=>rows+='<div class="dl-item">'+(vtIsDeadline(x) ? '<span class="dl-kind k-dl">마감</span>' : '<span class="dl-kind k-vault">할 일</span>')+'<span class="txt">'+
     (x.status==="todo" ? esc(x.text) : '<s style="color:var(--ink3)">'+esc(x.text)+'</s>')+
     (x.section?' <span class="at">'+esc(x.section)+'</span>':"")+'</span></div>');
   evs.forEach(x=>rows+='<div class="dl-item"><span class="dl-kind k-ev">'+(x.time||"종일")+'</span><span class="txt">'+esc(x.title)+'</span></div>');
@@ -2175,6 +2182,10 @@ document.getElementById("rvSoonList").addEventListener("click", reviewClick);
 
 /* 볼트 할 일 → 이 대시보드의 날짜 기준으로 쓸 수 있게 정리 */
 function vtActive(x){ return x.status === "todo"; }
+/* '마감' 체크박스로 #deadline을 붙인 항목 — 달력 빨간 점·머리말 D-day·일정 탭 배지에 쓴다.
+   태그가 없는 날짜 있는 할 일은 마감이 아니라 할 일(초록 칸)로 센다 */
+function vtIsDeadline(x){ return (x.tags||[]).indexOf("#deadline") > -1; }
+function vaultDeadlines(){ return vaultTasks.filter(x=>vtActive(x) && x.due && vtIsDeadline(x)); }
 
 /* 볼트 항목의 기준일 — 마감(📅)이 있으면 마감, 없으면 예정(⏳). 시작일(🛫)만 있으면 날짜 없음 */
 function vtDate(x){ return x.due || x.scheduled || null; }
@@ -2209,6 +2220,7 @@ function vaultRowHtml(x){
   const cls = x.status === "done" ? " is-done"
             : x.status === "cancelled" ? " is-cancelled" : "";
   const meta = [];
+  if (vtIsDeadline(x)) meta.push('<span class="tag dl">마감</span>');
   if (x.section) meta.push('<span class="sec">'+esc(x.subsection ? x.section+" › "+trCleanHead(x.subsection) : x.section)+'</span>');
   if (x.due) meta.push('<span class="due">'+shortDate(x.due)+'</span>');
   else if (x.scheduled) meta.push('<span class="at">예정 '+shortDate(x.scheduled)+'</span>');
@@ -2396,6 +2408,7 @@ async function fetchVaultTasks(opts){
   vaultBase = res.baseModifiedTime || null;   /* 이후 쓰기 단계의 낙관적 잠금용 */
   vaultAt = new Date();
   renderCalendar();          /* 달력 마감 점에도 반영 */
+  renderHeader();            /* #deadline 할 일을 머리말 D-day에 */
   renderVaultTasks();
   /* 할 일 수·완료율·내일 할 일 수가 이제 볼트 항목을 포함한다 */
   renderTodos(); renderClosing(); renderWeek(); updateDashboardSummary();
@@ -5099,7 +5112,8 @@ function updateDashboardSummary(){
   const closeDoneN = closingSteps().filter(x=>x.ok).length;
   const close = closeDoneN + "/5";
   /* 지난 마감일도 계속 '임박'으로 세던 문제 — 하한(오늘 이후)을 추가했다 */
-  const nearDeadlines=S.deadlines.filter(x=>x.date>=t && x.date<=addDays(t,7)).length;
+  const nearDeadlines=S.deadlines.filter(x=>x.date>=t && x.date<=addDays(t,7)).length +
+    vaultDeadlines().filter(x=>x.due>=t && x.due<=addDays(t,7)).length;
   /* 공부 탭 배지 — 오늘 복습할 질문 수 */
   const reviewPlans=S.reviews.filter(x=>x.nextDue<=t).length;
   const values={sumClosing:close,sumTodos:String(activeTodos),sumStudy:fmtClock(studyMin),sumReview:String(dueReviews)};

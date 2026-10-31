@@ -227,7 +227,7 @@ input[type=range]{accent-color:var(--accent);width:100%;margin:9px 0 0}
 .streak{font-family:var(--f-num);font-size:11px;color:var(--ink3)}
 .streak b{color:var(--signal);font-size:13px;font-weight:600}
 .grass{display:flex;gap:2px;margin-top:8px}
-/* 습관 기록(2026-10-31) — 그날 체크 + '한 것' 한 줄. 적은 내용은 기록 실적이라 파란 펜 */
+/* 습관 기록 — 그날 체크 + '한 것' 한 줄. 적은 내용은 기록 실적이라 파란 펜 */
 .hb-chk{flex:none;width:26px;height:26px;border-radius:var(--r);border:1.5px solid var(--rule);background:var(--paper);color:transparent;font-size:14px;font-weight:700;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center}
 .hb-chk:hover{border-color:var(--accent)}
 .hb-chk.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
@@ -311,7 +311,7 @@ code{font-family:var(--f-num);font-size:11.5px;background:var(--paper);padding:1
 .wo-habit{gap:8px;margin-top:8px}
 ul.list#woExList li{align-items:center}
 @media (max-width:820px){ .wo-row{grid-template-columns:1fr} .wo-meta{grid-column:1} #woDate{max-width:140px} }
-/* 할 일 D-day 배지 — 머리말의 .dday(테두리·안쪽 여백) 규칙이 섞여 들어와 'D-10'이 두 줄로 깨지고 다크에서 배경이 밝았다 */
+/* 할 일 D-day 배지 — 머리말 .dday의 테두리·여백과 별개로 한 줄, 카드 바탕색 */
 li.vt .dday,.db-tasks li .dday{white-space:nowrap;width:auto;min-width:48px;justify-content:flex-end;padding:3px 7px;border-radius:8px}
 [data-theme="dark"] .dday{background:rgba(0,0,0,.18)}
 /* 목표 카드 접기 — 접으면 요약 타일만 */
@@ -363,7 +363,7 @@ li.vt .dday,.db-tasks li .dday{white-space:nowrap;width:auto;min-width:48px;just
 .db-acts .ghost.sm,.db-tasks .ghost.sm{padding:3px 10px;font-size:11.5px}
 .day-foot{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--ink2)}
 .day-foot b{color:var(--ink);font-weight:600}
-/* 다크에서 .ghost가 밝은 반투명 배경(.55)이라 글자가 묻혔다 — 모든 카드에 해당 */
+/* 다크에서 .ghost 바탕은 어둡게 — 밝은 반투명이면 글자가 묻힌다(모든 카드) */
 [data-theme="dark"] .ghost{background:rgba(0,0,0,.18)}
 @media (max-width:820px){
   .db{grid-template-columns:58px minmax(0,1fr);gap:4px 10px;padding:10px 2px}
@@ -450,8 +450,7 @@ li.vt .dday,.db-tasks li .dday{white-space:nowrap;width:auto;min-width:48px;just
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   디자인 층 · "공부 플래너" (2026-10 개편)
-   이전의 2026 UI refresh · v2 · v3 세 겹을 이 한 곳으로 합쳤다. 토큰은 여기서만 정의한다.
+   디자인 층 · "공부 플래너" — 토큰은 여기서만 정의한다.
    - 소재: 한국 수험생의 10분 플래너 — 모눈종이, 파란 펜(실적), 빨간 펜(마감),
      형광펜(지금). 색 셋은 각자 한 가지 뜻만 갖는다.
    - 머리말의 10분 칸(.ledger)이 화면의 주인공이다. 기록하면 칸이 채워진다.
@@ -570,7 +569,7 @@ header.top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end
 #cardReview{order:3;grid-column:span 5}
 #cardTime{order:4}
 #cardHabit{order:5}
-/* 습관 기록이 전체폭이 되면서(2026-10-31) 수면은 하루 닫기와 짝을 짓는다 */
+/* 습관 기록은 전체폭, 수면은 하루 닫기와 짝을 짓는다 */
 #cardSleep{order:6;grid-column:span 5}
 #cardClosing{order:7;grid-column:span 7}
 #cardJournal{order:9}
@@ -586,6 +585,9 @@ header.top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end
 .ghost:hover{border-color:var(--ink3);color:var(--ink);background:transparent}
 input[type=text],input[type=date],input[type=time],input[type=number],input[type=url],select,textarea{border-radius:var(--r);border-color:var(--rule);background:var(--paper);padding:9px 11px;transition:border-color var(--motion-fast),box-shadow var(--motion-fast)}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);outline:none}
+/* 앱에서 테마를 고르면 기본 입력칸(달력·시계 아이콘, 체크박스)도 그 테마로 — meta color-scheme은 시스템을 따른다 */
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark}
 [data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea{background:var(--input-dark);border-color:var(--input-dark-border);color:var(--ink);color-scheme:dark}
 [data-theme="dark"] input::placeholder,[data-theme="dark"] textarea::placeholder{color:var(--input-dark-placeholder)}
 @media (prefers-color-scheme: dark){
@@ -672,7 +674,15 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 .gcal-off{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;font-size:13px;color:var(--ink2)}
 .gcal-off[hidden]{display:none}
 .gcal-off>span{flex:1;min-width:200px}
-#cardGcal.is-off .gcal-acts,#cardGcal.is-off #evList,#cardGcal.is-off details.help,#cardGcal.is-off #calStatus{display:none}
+#cardGcal.is-off #calStatus,#cardGcal.is-off #calRefresh{display:none}
+#cardGcal.is-off #gcalOff{margin-bottom:4px}
+.ev .tag.dl{margin-right:6px;vertical-align:1px}
+.ev .ev-dday{font-family:var(--f-num);font-size:11px;color:var(--ink3);white-space:nowrap;padding-top:1px}
+.ev .ev-dday.near{color:var(--m-dl);font-weight:600}
+.ev.is-dl .ev-time{color:var(--m-dl)}
+.sheet-help{margin-top:6px}
+.field label.switch{display:flex;align-items:center;gap:8px;font-weight:500;color:var(--ink)}
+.field label.switch input{width:20px;height:20px;min-height:0;margin:0;flex:none;accent-color:var(--accent)}
 #cardGcal.is-off>h2{margin-bottom:10px}
 
 /* ── 설정 창: 성격별 묶음, 닫기(×), 바닥에 붙는 저장 버튼 ── */
@@ -694,7 +704,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 .confirm-msg{margin-top:10px;white-space:pre-line;font-size:13px;color:var(--ink2)}
 .confirm-acts{margin-top:20px;justify-content:flex-end}
 .confirm-input{width:100%;margin-top:12px}
-/* Tasks.md 결과·사유(브리지 v19) — 기록한 결과라 파란 펜 */
+/* Tasks.md 결과·사유 — 기록한 결과라 파란 펜 */
 .t-meta .res{font-size:11px;color:var(--accent);font-weight:600}
 
 /* ── 모바일 하단 탭 · 배지 · 피드백 ── */
@@ -708,7 +718,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 [data-sync="working"]::before{background:var(--warn);animation:syncPulse 1s ease-in-out infinite}.status[aria-live]{transition:color var(--motion-normal) var(--ease-standard)}
 .is-updated{animation:valuePop 360ms var(--ease-standard)}@keyframes valuePop{0%{transform:scale(1);opacity:.7}55%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}@keyframes syncPulse{50%{opacity:.35;transform:scale(.72)}}
 
-/* 작은 배치 도우미 — 예전 인라인 style을 옮긴 것 */
+/* 작은 배치 도우미 — 인라인 style 대신 쓰는 클래스 */
 .mt-0{margin-top:0}.mt-4{margin-top:4px}.mt-6{margin-top:6px}.mt-9{margin-top:9px}.mt-12{margin-top:12px}
 .ta-r{text-align:right}.w-full{width:100%}
 .row-split{margin-top:10px;justify-content:space-between}
@@ -721,7 +731,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 @media (max-width:1100px) and (min-width:821px){
   .wrap{padding-left:20px;padding-right:20px}.card{padding-left:18px;padding-right:18px}
 }
-@media (max-width:900px){
+@media (max-width:820px){
   .grid{grid-template-columns:minmax(0,1fr)}
   .card,.card.wide,#cardTodo,#cardReview,#cardSleep,#cardClosing{grid-column:1 / -1}
 }
@@ -737,14 +747,16 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
   .stats{row-gap:14px}
   .close-stamp{width:62px;height:62px;font-size:12px;top:10px;right:12px}
   /* 돌아보기·일정 탭에서는 머리말을 한 줄로 — 10분 칸은 오늘·공부 탭에서 본다 */
+  body[data-mtab="study"] .ledger-grid,body[data-mtab="study"] .ledger-key,body[data-mtab="study"] .today-summary,
+  body[data-mtab="study"] .ledger-note,body[data-mtab="study"] .ledger-go,
   body[data-mtab="plan"] .ledger-grid,body[data-mtab="plan"] .ledger-key,body[data-mtab="plan"] .today-summary,
   body[data-mtab="plan"] .ledger-note,body[data-mtab="plan"] .ledger-go,
   body[data-mtab="look"] .ledger-grid,body[data-mtab="look"] .ledger-key,body[data-mtab="look"] .today-summary,
   body[data-mtab="look"] .ledger-note,body[data-mtab="look"] .ledger-go,
   body[data-mtab="look"] .dday-strip{display:none}
-  body[data-mtab="plan"] .ledger,body[data-mtab="look"] .ledger{padding:10px 14px}
-  body[data-mtab="plan"] .ledger-head,body[data-mtab="look"] .ledger-head{margin:0}
-  body[data-mtab="plan"] .ledger-total b,body[data-mtab="look"] .ledger-total b{font-size:22px}
+  body[data-mtab="study"] .ledger,body[data-mtab="plan"] .ledger,body[data-mtab="look"] .ledger{padding:10px 14px}
+  body[data-mtab="study"] .ledger-head,body[data-mtab="plan"] .ledger-head,body[data-mtab="look"] .ledger-head{margin:0}
+  body[data-mtab="study"] .ledger-total b,body[data-mtab="plan"] .ledger-total b,body[data-mtab="look"] .ledger-total b{font-size:22px}
   body[data-mtab="plan"] header.top,body[data-mtab="look"] header.top{padding-top:14px;padding-bottom:12px}
   body[data-mtab="plan"] .today-date,body[data-mtab="look"] .today-date{font-size:28px}
   #cardClosing.is-closed>h2{padding-right:70px}
@@ -766,7 +778,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
   .cal-grid,.cal-dow{gap:2px}.cell{min-height:50px;padding:5px 3px;border-radius:7px}.cell .dnum{font-size:11px}
   .mk{width:9px;height:9px;min-width:9px;min-height:9px;font-size:8px}
 }
-@media (max-width:900px) and (orientation:landscape){
+@media (max-width:820px) and (orientation:landscape){
   .mnav button{min-height:44px}.mnav button span{display:none}
   .wrap{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
   header.top{padding-top:14px;padding-bottom:14px}.today-date{font-size:28px}
@@ -891,13 +903,63 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 .pomo-cfg label{display:inline-flex;align-items:center;gap:5px}
 .pomo-cfg input{width:64px}
 @media (max-width:820px){
-  /* 1fr = minmax(auto,1fr)라 긴 할 일 이름(줄바꿈 안 함)만큼 칸이 넓어져 화면 밖으로 빠졌다 */
+  /* 1fr = minmax(auto,1fr)이면 긴 할 일 이름(줄바꿈 안 함)만큼 칸이 넓어져 화면 밖으로 나간다 — 0부터 */
   .tr-wrap{grid-template-columns:minmax(0,1fr);gap:6px}
   .tr-picks{flex-direction:column}
   #trSubjPick{flex:none;width:100%}
   .tr-time{font-size:44px}
   /* 공부 탭에서 시간 추적(order 4)이 복습보다 먼저 보이게 — 데스크톱은 할 일｜복습 짝(order 2·3)이 시간 추적 위 */
   #cardReview{order:5}
+}
+
+/* ══ 모바일 세부 · 데스크톱 2단 ═══════════════════════════════════════════
+   모바일: D-day 한 줄, 과목 칸 하나, 지난 수면은 읽기 줄, 큰 체크
+   데스크톱(1101px 이상): 2단 — 왼쪽은 오늘 쓰는 것, 오른쪽은 곁눈으로 보는 것 */
+.sl-view{display:none}
+/* 하루 닫기는 돌아보기 탭에 있지만 저녁에 직접 채우는 카드 — 지난 것을 보는 카드처럼 옅게 두지 않는다 */
+#cardClosing.card{background:var(--card);box-shadow:var(--shadow);content-visibility:visible}
+.nav-badge.is-dot{min-width:8px;width:8px;height:8px;padding:0;vertical-align:6px}
+.week-empty{flex:1;align-self:center;padding:0 12px}
+
+@media (max-width:820px){
+  /* D-day는 한 줄로 두고 옆으로 넘긴다 */
+  .dday-strip{flex-wrap:nowrap;overflow-x:auto;min-width:0;scrollbar-width:none;margin-right:-14px;padding-right:14px}
+  .dday-strip::-webkit-scrollbar{display:none}
+  .dday-strip .dday{flex:none;white-space:nowrap}
+  /* 시간 추적: 과목은 드롭다운 하나 — '직접 입력…'을 고르면 입력칸이 나온다 */
+  #cardTime[data-subj="pick"] #trSubject{display:none}
+  #cardTime[data-subj="type"] #trSubjPick{display:none}
+  /* 수면: 오늘 줄만 바로 고치고, 지난 날은 눌러서 고친다 */
+  .sleep-row:not(.now):not(.open) .time-sel{display:none}
+  .sleep-row:not(.now):not(.open) .sl-view{display:block;grid-column:2 / 4}
+  .sl-view{background:none;border:1px dashed var(--rule);border-radius:var(--r);min-height:40px;padding:6px 10px;
+    text-align:left;font-family:var(--f-num);font-size:13px;color:var(--ink2);font-variant-numeric:tabular-nums}
+  /* Tasks.md 할 일은 말줄임(…) 대신 줄을 바꿔 다 보인다 — 모바일엔 마우스를 올려 title을 볼 방법이 없다 */
+  .db-tasks li{align-items:flex-start}
+  .db-tasks li .t-text,.vault-more>span,.tr-what,.tt-subj,.tt-task{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+  .db-tasks li .t-text{padding-top:2px}
+  /* 오늘 탭 순서: 오늘 계획 → 할 일 → 수면(아침에 먼저 적는다) → 습관(하루를 지나며 채운다) */
+  #cardSleep{order:3}
+  /* 손가락 크기 */
+  .check{width:28px;height:28px}
+  .check.on::after{left:9px;top:4px;width:7px;height:13px}
+  label.chk input{width:22px;height:22px}
+}
+
+/* ── 데스크톱 · 2단 ── */
+@media (min-width:1101px){
+  .wrap{max-width:1280px}
+  .grid:has(>.dcols){display:block}
+  .dcols{display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:20px;align-items:start}
+  .dcol{display:flex;flex-direction:column;gap:20px;min-width:0}
+  .dcol>section{order:0!important}   /* #cardTodo{order:2} 같은 ID 규칙보다 앞서야 DOM 순서대로 쌓인다 */
+  .dcol-side .cal-nav .m{font-size:16px;min-width:0}
+  .dcol-side .cell{min-height:44px;padding:4px}
+  .dcol-side .legend{gap:6px 12px}
+  .dcol-side .stats{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:14px}
+  .dcol-side .stat:nth-child(3){border-left:none;padding-left:0}
+  .dcol-side .stat .v{font-size:22px}
+  .dcol-side .week{gap:6px}
 }
 </style>
 
@@ -967,7 +1029,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       </details>
     </section>
     <!-- 오늘 마감 -->
-    <section data-tab="today" class="card wide" id="cardClosing">
+    <section data-tab="look" class="card wide" id="cardClosing">
       <span class="close-stamp" id="closeStamp" hidden>오늘<br>닫음</span>
       <h2>하루 닫기 <span class="count" id="closeCount" aria-live="polite">0/5</span>
         <span class="spacer"></span>
@@ -1202,7 +1264,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       </div>
     </section>
 
-    <!-- 습관 기록 (2026-10-31~) — 습관 체크 + 그날 '한 것' 한 줄(S.habitNotes).
+    <!-- 습관 기록 — 습관 체크 + 그날 '한 것' 한 줄(S.habitNotes).
          세트 입력을 붙인 습관은 행을 펼쳐 운동 세트를, 수면 연동 습관은 취침 기록으로 자동 체크.
          습관·종목 이름은 사용자가 카드에서 정한다(공개 저장소라 코드에 두지 않는다) -->
     <section data-tab="today" class="card wide" id="cardHabit">
@@ -1289,41 +1351,20 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       </div>
     </section>
 
-    <!-- 구글 캘린더 -->
+    <!-- 다가오는 일정·마감 — 구글 캘린더 7일 + 시험·마감 30일을 날짜순으로. 연결·내보내기는 설정의 '캘린더·동기화' -->
     <section data-tab="plan" class="card wide" id="cardGcal">
-      <h2>구글 캘린더
-        <span class="eyebrow" id="calMode">간편 연동</span>
+      <h2>다가오는 일정·마감
         <span class="spacer"></span>
         <span class="status" id="calStatus" aria-live="polite"><span class="dot"></span>연결 안 됨</span>
+        <button class="ghost sm" id="calRefresh">새로고침</button>
       </h2>
       <div class="gcal-off" id="gcalOff" hidden>
-        <span>구글 캘린더 연동을 쓰지 않는 중입니다. 켜면 일정이 달력과 오늘 계획에 함께 나옵니다.</span>
+        <span>구글 캘린더 연동이 꺼져 있어 시험·마감만 보입니다. 켜면 앞으로 7일 일정도 함께 나옵니다.</span>
         <button type="button" class="ghost sm" id="gcalOffOpen">설정에서 켜기</button>
       </div>
-      <div class="row gcal-acts">
-        <button class="btn sm" id="calConnect">연결 확인</button>
-        <button class="ghost" id="calRefresh">새로고침</button>
-        <button class="ghost" id="calPush">할 일을 캘린더로 보내기</button>
-        <span class="grow"></span>
-        <label class="switch"><input type="checkbox" id="logSessions"> 공부 기록도 캘린더에 남기기</label>
-      </div>
       <div id="evList" class="mt-12">
-        <div class="empty">설정에서 연동을 마치면 앞으로 7일간의 일정이 표시되고, 위 달력에도 함께 나타납니다.</div>
+        <div class="empty">앞으로 7일 일정과 30일 안의 시험·마감이 날짜순으로 나옵니다.</div>
       </div>
-      <details class="help">
-        <summary>연동 설정 방법</summary>
-        <p><b>방법 A · 간편 연동 (Apps Script · 권장)</b><br>구글 클라우드 콘솔이 필요 없습니다. 함께 받은 <code>google-calendar-bridge.txt</code> 파일을 사용합니다.</p>
-        <ol>
-          <li><code>script.google.com</code>에 접속해 <b>새 프로젝트</b>를 만듭니다.</li>
-          <li>기본 코드를 모두 지우고 브리지 코드를 붙여넣습니다.</li>
-          <li>맨 윗줄 <code>TOKEN</code> 값을 본인만 아는 문자열로 바꾸고 저장합니다.</li>
-          <li>함수 목록에서 <code>setup</code>을 골라 실행하고 권한을 승인합니다.</li>
-          <li><b>배포 → 새 배포 → 웹 앱</b>, <b>실행: 나</b> / <b>액세스 권한: 모든 사용자</b>로 배포합니다.</li>
-          <li>발급된 <code>/exec</code> URL과 토큰을 이 대시보드 설정에 입력합니다.</li>
-        </ol>
-        <p><b>참고</b> — 이 웹 앱은 캘린더뿐 아니라 대시보드 데이터 전체를 저장해 다른 기기와 동기화하는 데도 함께 쓰입니다(구글 드라이브에 파일 하나로 저장됩니다). 브리지 코드를 새 버전으로 바꿨다면 <code>setup</code>을 한 번 더 실행해 드라이브 접근 권한을 승인한 뒤 <b>배포 → 배포 관리 → 새 버전으로 배포</b>까지 마쳐야 반영됩니다.</p>
-        <p><b>방법 B · 직접 연동 (OAuth)</b><br>Google Cloud Console에서 Calendar API를 켜고 OAuth 클라이언트 ID를 발급받아 설정에 입력합니다. 이 페이지는 <code>https://</code> 주소에 올려야 하며, 그 주소를 <b>승인된 자바스크립트 원본</b>에 등록해야 합니다.</p>
-      </details>
     </section>
 
   </div>
@@ -1417,6 +1458,22 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       </div>
     </div>
     <div class="field">
+      <label>연결 상태</label>
+      <div class="row">
+        <button class="btn sm" id="calConnect">저장하고 연결 확인</button>
+        <span class="status" data-cal-status aria-live="polite"><span class="dot"></span>연결 안 됨</span>
+      </div>
+    </div>
+    <div class="field">
+      <label class="switch"><input type="checkbox" id="logSessions"> 공부 기록도 캘린더에 남기기</label>
+      <div class="hint">시간 추적에서 기록을 끝낼 때마다 그 시간이 캘린더 일정으로도 남습니다.</div>
+    </div>
+    <div class="field">
+      <label>대시보드 할 일 보내기</label>
+      <div class="row"><button class="ghost" id="calPush">할 일을 캘린더로 보내기</button></div>
+      <div class="hint">날짜가 있고 아직 캘린더에 없는 '대시보드 할 일'을 한꺼번에 일정으로 등록합니다.</div>
+    </div>
+    <div class="field">
       <label for="cfgDuration">시간을 넣은 할 일의 일정 길이 (분)</label>
       <input type="number" id="cfgDuration" min="5" max="600" step="5" class="num-in">
     </div>
@@ -1428,6 +1485,20 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       </div>
       <div class="hint">위 캘린더 연동(간편 연동 · Apps Script)을 설정해 두면, 데이터 전체가 그 웹 앱을 통해 자동으로 저장되고 다른 기기와 동기화됩니다. 새 기기에서는 같은 웹 앱 URL과 토큰만 입력하면 최신 데이터를 받아옵니다.</div>
     </div>
+      <details class="help sheet-help">
+      <summary>연동 설정 방법</summary>
+      <p><b>방법 A · 간편 연동 (Apps Script · 권장)</b><br>구글 클라우드 콘솔이 필요 없습니다. 함께 받은 <code>google-calendar-bridge.txt</code> 파일을 사용합니다.</p>
+      <ol>
+        <li><code>script.google.com</code>에 접속해 <b>새 프로젝트</b>를 만듭니다.</li>
+        <li>기본 코드를 모두 지우고 브리지 코드를 붙여넣습니다.</li>
+        <li>맨 윗줄 <code>TOKEN</code> 값을 본인만 아는 문자열로 바꾸고 저장합니다.</li>
+        <li>함수 목록에서 <code>setup</code>을 골라 실행하고 권한을 승인합니다.</li>
+        <li><b>배포 → 새 배포 → 웹 앱</b>, <b>실행: 나</b> / <b>액세스 권한: 모든 사용자</b>로 배포합니다.</li>
+        <li>발급된 <code>/exec</code> URL과 토큰을 이 대시보드 설정에 입력합니다.</li>
+      </ol>
+      <p><b>참고</b> — 이 웹 앱은 캘린더뿐 아니라 대시보드 데이터 전체를 저장해 다른 기기와 동기화하는 데도 함께 쓰입니다(구글 드라이브에 파일 하나로 저장됩니다). 브리지 코드를 새 버전으로 바꿨다면 <code>setup</code>을 한 번 더 실행해 드라이브 접근 권한을 승인한 뒤 <b>배포 → 배포 관리 → 새 버전으로 배포</b>까지 마쳐야 반영됩니다.</p>
+      <p><b>방법 B · 직접 연동 (OAuth)</b><br>Google Cloud Console에서 Calendar API를 켜고 OAuth 클라이언트 ID를 발급받아 설정에 입력합니다. 이 페이지는 <code>https://</code> 주소에 올려야 하며, 그 주소를 <b>승인된 자바스크립트 원본</b>에 등록해야 합니다.</p>
+    </details>
 
     <h4 class="sheet-group">데이터</h4>
     <div class="field">
@@ -1468,10 +1539,10 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 </div>
 
 <nav class="mnav" id="mnav" aria-label="화면 전환">
-  <button data-go="today" class="on"><b>오늘 <i class="nav-badge" id="navToday" aria-label="오늘 미완료 수">0</i></b><span>계획·할 일</span></button>
-  <button data-go="study"><b>공부 <i class="nav-badge" id="navStudy" aria-label="공부 미완료 수">0</i></b><span>시간·복습</span></button>
-  <button data-go="plan"><b>일정 <i class="nav-badge" id="navPlan" aria-label="일정 수">0</i></b><span>달력</span></button>
-  <button data-go="look"><b>돌아보기 <i class="nav-badge" id="navLook" aria-label="돌아보기 항목 수">0</i></b><span>주간·기록</span></button>
+  <button data-go="today" class="on"><b>오늘 <i class="nav-badge" id="navToday" aria-label="오늘 남은 할 일·습관 수">0</i></b><span>계획·할 일</span></button>
+  <button data-go="study"><b>공부 <i class="nav-badge" id="navStudy" aria-label="오늘 복습할 질문 수">0</i></b><span>시간·복습</span></button>
+  <button data-go="plan"><b>일정 <i class="nav-badge" id="navPlan" aria-label="7일 안의 마감 수">0</i></b><span>달력·마감</span></button>
+  <button data-go="look"><b>돌아보기 <i class="nav-badge" id="navLook" aria-label="하루 닫기 남음">0</i></b><span>하루 닫기·기록</span></button>
 </nav>
 <div class="undo" id="undo" role="status"><span id="undoMsg"></span><button id="undoBtn">되돌리기</button></div>
 <div class="tip" id="tip"></div>
@@ -1545,9 +1616,9 @@ function save(){
    없을 때는 절대로 원격을 덮어쓰지 않는다 — 새 기기에서 접속했을 때
    빈 데이터가 기존 데이터를 지워버리는 사고를 막기 위함. */
 /* ══ 브리지 공용 호출 ══════════════════════
-   세 곳(stateRequest·vaultRequest·scriptCall)이 fetch를 따로 부르던 것을 하나로 모은다.
+   stateRequest·vaultRequest·scriptCall이 함께 쓰는 fetch.
    - 타임아웃: Apps Script는 콜드 스타트가 수 초~십수 초 걸리고, 모바일 네트워크가
-     끊기면 fetch가 끝나지 않아 "확인 중…"에서 멈춰 있었다 → 20초 뒤 실패로 처리.
+     끊기면 fetch가 끝나지 않아 "확인 중…"에서 멈춘다 → 20초 뒤 실패로 처리.
    - 재시도: 네트워크 자체가 실패한 경우에만 1회 재시도(읽기 요청만 — 쓰기를 두 번
      보내면 일정이 두 개 생길 수 있다).
    - HTML 응답: 배포가 바뀌었거나 권한이 풀리면 JSON 대신 구글 로그인/오류 HTML이
@@ -1923,7 +1994,7 @@ document.getElementById("ledgerGo").addEventListener("click", ()=>{
   card.scrollIntoView({ behavior:"smooth", block:"center" });
   if (!trRun) setTimeout(()=>{ const b = document.getElementById("trStartBtn"); if (b) b.focus(); }, 420);
 });
-setInterval(()=>{ if (document.visibilityState === "visible") { try{ renderLedger(); }catch(e){} } }, 60000);
+setInterval(()=>{ if (document.visibilityState === "visible") { try{ renderLedger(); updateDashboardSummary(); }catch(e){} } }, 60000);
 
 /* ══════════════════════════════════════════════════════
    달력
@@ -1957,7 +2028,7 @@ function renderCalendar(){
     const title = [nTodo?"할 일 "+nTodo:"", nEv?"일정 "+nEv:"", nDl?"마감 "+nDl:"",
                    nRv?"복습 "+nRv:"", hasJr?"기록 있음":""].filter(Boolean).join(" · ");
     const dow = new Date(d+"T00:00:00").getDay();
-    /* 낭독기는 숫자만 읽었다 — 날짜·요일·오늘 여부와 그날의 내용을 함께 들려준다 */
+    /* 낭독기에는 날짜·요일·오늘 여부와 그날의 내용을 함께 들려준다 */
     const aria = Number(d.slice(5,7))+"월 "+Number(d.slice(8))+"일 "+DOW[dow]+"요일"+(d===t?", 오늘":"")+(title ? ", "+title : "");
     return '<button class="cell'+(inMonth?"":" out")+(d===t?" now":"")+
       (d===selectedDate?" sel":"")+(dow===0?" sun":"")+'" data-d="'+d+'" title="'+esc(title)+'" aria-label="'+esc(aria)+'"'+
@@ -2079,7 +2150,14 @@ function updateSleepRow(row){
   const cell = row.querySelector(".dur");
   cell.className = "dur " + (m ? (m<goal ? "short" : "") : "none");
   cell.textContent = m ? fmtClock(m) : "—";
+  row.querySelector(".sl-view").textContent = sleepViewText(row.dataset.d);
 }
+document.getElementById("sleepList").addEventListener("click", e=>{
+  const b = e.target.closest(".sl-view"); if (!b) return;
+  const row = b.closest(".sleep-row");
+  sleepOpen.add(row.dataset.d); row.classList.add("open");
+  const first = row.querySelector("select"); if (first) first.focus();
+});
 function renderSleepSummary(){
   const goal = (S.settings.sleepGoal||7)*60;
   const vals = sleepDays().map(sleepMinutes).filter(x=>x);
@@ -2089,6 +2167,12 @@ function renderSleepSummary(){
   document.getElementById("sleepNote").textContent =
     avg ? (avg >= goal ? "목표 달성" : "목표보다 "+fmtClock(goal-avg)+" 부족") : "";
 }
+/* 모바일에서 지난 날 수면은 '23:40 ~ 07:10' 한 줄로 보이고, 누르면 고칠 수 있게 펼친다 */
+const sleepOpen = new Set();
+function sleepViewText(d){
+  const rec = S.sleep[d] || {};
+  return (rec.bed || rec.wake) ? (rec.bed || "--:--") + " ~ " + (rec.wake || "--:--") : "기록 없음 · 눌러서 적기";
+}
 function renderSleep(){
   const t = today(), goal = (S.settings.sleepGoal||7)*60;
   document.getElementById("sleepList").innerHTML = sleepDays().map(d=>{
@@ -2096,8 +2180,9 @@ function renderSleep(){
     const m = sleepMinutes(d);
     const dow = DOW[new Date(d+"T00:00:00").getDay()];
     const cls = m ? (m<goal ? "short" : "") : "none";
-    return '<div class="sleep-row'+(d===t?" now":"")+'" data-d="'+d+'">'+
+    return '<div class="sleep-row'+(d===t?" now":"")+(sleepOpen.has(d)?" open":"")+'" data-d="'+d+'">'+
       '<span class="d">'+shortDate(d)+' '+dow+'</span>'+
+      '<button type="button" class="sl-view" aria-label="'+shortDate(d)+' 수면 기록 고치기">'+sleepViewText(d)+'</button>'+
       timeSelectHtml("bed", rec.bed)+
       timeSelectHtml("wake", rec.wake)+
       '<span class="dur '+cls+'">'+(m?fmtClock(m):"—")+'</span></div>';
@@ -2364,6 +2449,7 @@ function renderVaultTasks(){
   if (!listEl) return;
   renderGoalStrip();   /* 열린 #이정표가 목표 카드의 이정표 띠에 들어간다 */
   renderTrPick();      /* 시간 추적의 고르기 목록도 같은 미완료 항목을 쓴다 */
+  renderUpcoming();    /* Tasks.md #deadline도 다가오는 일정·마감에 들어간다 */
   try{ renderDay(); }catch(err){ console.error("렌더 오류: renderDay", err); }   /* 블록 아래 할 일 */
   renderPlanMigrate();
 
@@ -2418,7 +2504,7 @@ function renderVaultTasks(){
 async function vaultRequest(payload){
   if (!(S.settings.scriptUrl||"").trim()) return null;
   const data = await bridgeFetch(payload);
-  return (data && data.network) ? null : data;   /* 네트워크 실패만 null — 기존 계약 유지 */
+  return (data && data.network) ? null : data;   /* 네트워크 실패만 null */
 }
 
 /* 할 일을 적는 곳도 Tasks.md 하나로 모은다. 대시보드 입력창은
@@ -2530,7 +2616,7 @@ async function fetchVaultTasks(opts){
   renderCalendar();          /* 달력 마감 점에도 반영 */
   renderHeader();            /* #deadline 할 일을 머리말 D-day에 */
   renderVaultTasks();
-  /* 할 일 수·완료율·내일 할 일 수가 이제 볼트 항목을 포함한다 */
+  /* 할 일 수·완료율·내일 할 일 수는 볼트 항목도 센다 */
   renderTodos(); renderClosing(); renderWeek(); updateDashboardSummary();
   if (!opts.silent){
     const n = vaultTasks.filter(vtActive).length;
@@ -3042,9 +3128,7 @@ if (typeof ResizeObserver !== "undefined"){
    baseModifiedTime 낙관적 잠금으로, 그 사이 폰·옵시디언에서 고친 것을 덮어쓰지 않는다.
    ──────────────────────────────────────────────────── */
 let vaultBusy = false;
-/* id별 검증 타이머 — 단일 타이머(vaultVerifyTimer)였을 때는 연달아 여러 항목을
-   토글하면 먼저 누른 항목의 검증 타이머가 나중 타이머로 덮여 사라졌다.
-   Map으로 항목별 타이머를 독립적으로 관리한다. */
+/* id별 검증 타이머 — 여러 항목을 연달아 토글해도 항목마다 검증이 따로 돈다 */
 const vaultVerifyTimers = new Map();
 
 /* 브리지 v19부터 getTasks 항목에 result·reason 키가 있다 */
@@ -3264,14 +3348,14 @@ function renderTodos(){
   const key = td => (td.due||"9999-99-99")+"T"+(td.time||"99:99");
   const active = all.filter(td=>!td.done).sort((a,b)=>
     key(a).localeCompare(key(b)) ||
-    (pri[a.priority]-pri[b.priority]) || b.createdAt.localeCompare(a.createdAt));
+    (pri[a.priority]-pri[b.priority]) || (b.createdAt||"").localeCompare(a.createdAt||""));
   const done = all.filter(td=>td.done).sort((a,b)=>
-    (b.doneAt||"").localeCompare(a.doneAt||"") || b.createdAt.localeCompare(a.createdAt));
+    (b.doneAt||"").localeCompare(a.doneAt||"") || (b.createdAt||"").localeCompare(a.createdAt||""));
 
   const vOpen = vaultTasks.filter(x=>vtActive(x) && vtInScope(x)).length;
   document.getElementById("todoCount").textContent = String(vOpen + active.length);
   /* 로컬 목록은 남은 항목이 있을 때만 보인다 — 새 할 일은 Tasks.md로 들어간다.
-     브리지가 없으면 예전처럼 여기에 쌓이므로 그때는 항상 보인다. */
+     브리지가 없으면 여기에 쌓이므로 그때는 항상 보인다. */
   const localOpen = S.todos.filter(td=>!td.done);
   const showLocal = localOpen.length>0 || !vaultWritable();
   document.getElementById("localTodoHead").style.display = showLocal ? "" : "none";
@@ -3324,7 +3408,7 @@ document.getElementById("vaultMore").addEventListener("click", e=>{
 });
 /* 입력창 하나가 원본 두 곳으로 갈라 보낸다:
    시간이 있으면 → 구글 캘린더 일정, 없으면 → Tasks.md.
-   브리지(웹 앱 URL)가 없을 때만 예전처럼 대시보드 안(S.todos)에 둔다. */
+   브리지(웹 앱 URL)가 없을 때만 대시보드 안(S.todos)에 둔다. */
 let todoBusy = false;
 function vaultPriority(p){ return p==="high" ? "high" : p==="low" ? "low" : null; }
 async function addTodo(){
@@ -3353,7 +3437,7 @@ async function addTodo(){
       clearForm(); syncCalendar();
       toast("캘린더에 등록했습니다 · "+shortDate(due)+" "+time);
     }
-    return;                       /* 실패 안내는 calCreate 쪽에서 이미 했다 */
+    return;                       /* 실패 안내는 calCreate가 한다 */
   }
 
   if (!time && vaultWritable()){
@@ -3433,8 +3517,7 @@ document.getElementById("todoTomorrow").addEventListener("click", ()=>{
 });
 
 /* ══ 시간 추적 ═══════════════════════════
-   공부 계획 카드와 함께 등록 과목(S.subjects)을 없앴다. 과목·할 일은 글자로 기록에
-   붙이고, 후보는 Tasks.md의 미완료 항목(과목 = 바로 위 '### ' 제목, 없으면 '## ' 섹션)과
+   과목·할 일은 글자로 기록에 붙이고, 후보는 Tasks.md의 미완료 항목(과목 = 바로 위 '### ' 제목, 없으면 '## ' 섹션)과
    최근 기록에서 가져온다. 옛 기록의 subjectId는 S.subjects에서 이름만 찾아 보여 준다.
    진행 중인 기록은 이 기기의 localStorage(TR_KEY)에만 둔다 — S에 넣으면 4초마다
    원격 상태를 다시 올리고, 다른 기기의 저장과 엇갈리면 기록이 사라질 수 있다. */
@@ -3548,7 +3631,7 @@ async function trStop(){
      캘린더 기록(네트워크)을 기다리지 않도록 저장보다 먼저 비운다 */
   if (willSave || r.round) trClearTask();
   if (r.phase === "focus") await trSave(r.subject, r.task, r.link, r.phaseStart, end, r.mode);
-  renderTracker();   /* 1분 미만이면 trSave가 다시 그리지 않아 '기록 종료' 버튼이 남아 있었다 */
+  renderTracker();   /* 1분 미만이면 trSave가 다시 그리지 않으므로 여기서 그린다 */
   if (r.mode === "pomo" && r.round) toast("포모도로 " + r.round + "회를 마쳤습니다.");
 }
 function trClearTask(){
@@ -3683,6 +3766,7 @@ async function trMarkDone(btn){
 }
 
 /* 고르기 목록·후보 — Tasks.md 미완료 항목을 과목별로 묶는다(가까운 기한 순) */
+let trSubjTyped = false;
 function renderTrPick(){
   const sel = document.getElementById("trPick"); if (!sel) return;
   sel.hidden = !vaultWritable();   /* 브리지가 없으면 직접 입력만 */
@@ -3707,8 +3791,13 @@ function renderTrPick(){
   const sp = document.getElementById("trSubjPick");
   const heads = trHeadSubjects();
   setHtmlIfChanged(sp, '<option value="">'+(heads.length ? "과목 고르기" : "Tasks.md 과목 없음")+'</option>'+
-    heads.map(g=>'<optgroup label="'+esc(g.label)+'">'+g.names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join("")+'</optgroup>').join(""));
-  sp.value = (subj && heads.some(g=>g.names.indexOf(subj) > -1)) ? subj : "";
+    heads.map(g=>'<optgroup label="'+esc(g.label)+'">'+g.names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join("")+'</optgroup>').join("")+
+    (heads.length ? '<option value="__type">직접 입력…</option>' : ""));
+  const inHeads = !!subj && heads.some(g=>g.names.indexOf(subj) > -1);
+  if (subj && !inHeads) trSubjTyped = true;
+  sp.value = inHeads ? subj : (trSubjTyped && heads.length ? "__type" : "");
+  /* 모바일은 과목 칸을 하나만 보인다 — 고를 과목이 없으면 입력칸, 직접 입력을 골랐으면 둘 다 */
+  document.getElementById("cardTime").dataset.subj = !heads.length ? "type" : (trSubjTyped ? "both" : "pick");
   document.getElementById("trTaskList").innerHTML = trOpenTasks()
     .filter(x=>!subj || trTaskSubject(x) === subj)
     .map(x=>'<option value="'+esc(trTaskText(x))+'"></option>').join("");
@@ -3749,6 +3838,12 @@ document.getElementById("trPick").addEventListener("change", e=>{
 document.getElementById("trSubject").addEventListener("input", renderTrPick);
 document.getElementById("trSubjPick").addEventListener("change", e=>{
   const v = e.target.value; if (!v) return;
+  if (v === "__type"){
+    trSubjTyped = true; renderTrPick();
+    document.getElementById("trSubject").focus();
+    return;
+  }
+  trSubjTyped = false;
   document.getElementById("trSubject").value = v;
   /* 다른 과목의 할 일을 골라 둔 상태면 그 연결과 할 일 칸을 비운다 */
   if (trPicked && trPicked.subject !== v){
@@ -3916,7 +4011,7 @@ function barSet(elId, from, to){
 }
 
 /* ══ 공부 계획 → Tasks.md ══════════════════════
-   공부 계획 카드를 없애고 계획도 Tasks.md에서 관리한다. 이 기기에 남은 진행 중 계획은
+   공부 계획은 Tasks.md에서 관리한다. 이 기기에 남은 진행 중 계획은
    할 일 카드의 안내 줄에서 한 번에 옮긴다. 옮긴 계획은 지우지 않고 migratedOn만 붙인다
    (JSON 내보내기에 남는다). 보류·완료한 계획은 옮기지 않는다. */
 function plansLeft(){ return (S.plans||[]).filter(p=>!p.done && !p.paused && !p.migratedOn); }
@@ -3951,7 +4046,7 @@ document.getElementById("planMigrate").addEventListener("click", async ()=>{
 });
 
 /* ── 복습 질문·D-day 붙여넣기 ─────────────────────────────
-   예전 '계획 JSON'과 같은 형식을 받되 plans·subjects는 쓰지 않는다(공부 계획은 Tasks.md). */
+   '계획 JSON' 형식을 받되 plans·subjects는 쓰지 않는다(공부 계획은 Tasks.md). */
 function normalizeImport(obj){
   if (!obj || typeof obj !== "object") throw new Error("JSON 형식이 아닙니다");
   const isDate = s => typeof s==="string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -4338,7 +4433,7 @@ document.getElementById("dayRefresh").addEventListener("click", ()=>{ fetchRouti
 /* '지금' 표시가 시간에 맞게 넘어가도록 1분마다 다시 그린다(보이는 동안만) */
 setInterval(()=>{ if (document.visibilityState === "visible") { try{ renderDay(); }catch(e){} } }, 60000);
 
-/* ══ 습관 기록 (2026-10-31~) ════════════════════════════
+/* ══ 습관 기록 ════════════════════════════════════════
    S.habits = [{id,name,log}] — 형식은 그대로(목표 카드 성실성·습관 정원이 같은 형식을 읽는다).
    S.habitNotes = { 날짜:{ 습관id:"한 것" } } — '한 것' 한 줄. 적으면 그날 체크된다.
    S.habitCfg = { sleepHabitId, bedTarget:"HH:MM" } — 수면 기록으로 자동 체크할 습관.
@@ -4767,7 +4862,10 @@ function renderWeek(){
   const past = days.filter(d=>d<=t);
   const mins = days.map(d=>S.sessions.filter(s=>s.date===d).reduce((a,s)=>a+s.minutes,0));
   const max = Math.max(60, ...mins);
-  document.getElementById("weekChart").innerHTML = days.map((d,i)=>{
+  const weekTotal = mins.reduce((a,b)=>a+b,0);
+  document.getElementById("weekChart").innerHTML = !weekTotal
+    ? '<div class="empty week-empty">이번 주 공부 기록이 쌓이면 요일별 공부 시간이 여기에 막대로 그려집니다.<br>시간 추적에서 기록을 시작해 보세요.</div>'
+    : days.map((d,i)=>{
     const h = Math.round((mins[i]/max)*66);
     const dow = DOW[new Date(d+"T00:00:00").getDay()];
     const future = d>t;
@@ -4782,7 +4880,7 @@ function renderWeek(){
   document.getElementById("stHours").textContent = fmtClock(actualMin);
 
   const inRange = S.todos.filter(td=>td.due && td.due>=ws && td.due<=t);
-  /* 할 일의 원본이 Tasks.md로 옮겨졌으므로 볼트 항목도 완료율에 넣는다(취소는 제외) */
+  /* 할 일의 원본은 Tasks.md라 볼트 항목도 완료율에 넣는다(취소는 제외) */
   const vRange = vaultTasks.filter(x=>x.due && x.due>=ws && x.due<=t && (x.status==="todo" || x.status==="done"));
   const totalN = inRange.length + vRange.length;
   const doneN = inRange.filter(td=>td.done).length + vRange.filter(x=>x.status==="done").length;
@@ -4798,9 +4896,7 @@ function renderWeek(){
 
   renderCap(actualMin, ws, we);
 }
-/* 주간 상한 게이지 — 실적 / 상한만 보여준다.
-   capMark·capGap은 이전 버전에서 항상 표시를 끄거나 빈 문자열로 지워
-   화면에 나온 적이 없는 죽은 요소였기 때문에 마크업에서도 걷어냈다. */
+/* 주간 상한 게이지 — 실적 / 상한만 보여준다. */
 function renderCap(actualMin, ws, we){
   const capMin = Math.round((S.settings.weeklyCap||25)*60);
   document.getElementById("capActual").textContent = fmtClock(actualMin);
@@ -4830,13 +4926,12 @@ function calConfigured(){
   return (m === "script" && !!(S.settings.scriptUrl||"").trim()) || (m === "oauth" && !!(S.settings.clientId||"").trim());
 }
 function setCalStatus(text, kind){
-  document.getElementById("calStatus").innerHTML =
+  const html =
     '<span class="dot'+(kind==="live"?" live":kind==="err"?" err":"")+'"></span>'+esc(text);
+  document.querySelectorAll("#calStatus,[data-cal-status]").forEach(el=>{ el.innerHTML = html; });
 }
 function renderModeLabel(){
   const m = mode();
-  document.getElementById("calMode").textContent =
-    m==="script" ? "간편 연동" : m==="oauth" ? "직접 연동" : "사용 안 함";
   const card = document.getElementById("cardGcal");
   if (card) card.classList.toggle("is-off", m==="off");
   const off = document.getElementById("gcalOff");
@@ -4918,8 +5013,7 @@ async function oauthFetch(url, opts, retry){
 }
 
 /* 달을 빠르게 넘기면 요청이 겹치는데, 응답이 순서대로 온다는 보장이 없다.
-   늦게 도착한 이전 달 응답이 eventsByDate를 통째로 덮어써 일정 점이
-   사라졌다 나타나던 문제 — 가장 마지막 요청의 응답만 반영한다. */
+   늦게 도착한 이전 달 응답이 eventsByDate를 덮어쓰지 않도록 가장 마지막 요청의 응답만 반영한다. */
 let calSeq = 0, calLastOk = 0, calErr = false;
 async function syncCalendar(opts){
   opts = opts || {};
@@ -5039,16 +5133,38 @@ function renderCalToday(){
 }
 function renderEventList(){
   try{ renderCalToday(); }catch(err){ console.error("렌더 오류: renderCalToday", err); }
+  renderUpcoming();
+}
+/* 다가오는 일정·마감 — 캘린더 일정(앞으로 7일)과 시험·마감(30일 안, 설정 D-day + Tasks.md #deadline)을
+   날짜순 한 목록으로. 같은 날이면 마감이 먼저 */
+function renderUpcoming(){
   const el = document.getElementById("evList"), t = today();
+  if (!el) return;
   const taken = importedIds();
   const rows = [];
-  for (let i=0;i<8;i++){
-    const d = addDays(t,i);
-    (eventsByDate[d]||[]).slice().sort((a,b)=>(a.time||"").localeCompare(b.time||""))
-      .forEach(ev=>rows.push({ d, ev }));
+  if (mode() !== "off"){
+    for (let i=0;i<8;i++){
+      const d = addDays(t,i);
+      (eventsByDate[d]||[]).slice().sort((a,b)=>(a.time||"").localeCompare(b.time||""))
+        .forEach(ev=>rows.push({ d, ev }));
+    }
   }
-  if (!rows.length){ el.innerHTML = '<div class="empty">앞으로 7일간 등록된 일정이 없습니다.</div>'; return; }
-  el.innerHTML = rows.map(({d,ev})=>{
+  const until = addDays(t,30), seen = new Set();
+  S.deadlines.filter(x=>x.date>=t && x.date<=until).map(x=>({ d:x.date, title:x.title }))
+    .concat(vaultDeadlines().filter(x=>x.due>=t && x.due<=until).map(x=>({ d:x.due, title:x.text })))
+    .forEach(x=>{ const k = x.d+"|"+x.title; if (seen.has(k)) return; seen.add(k); rows.push({ d:x.d, dl:x }); });
+  rows.sort((a,b)=> a.d.localeCompare(b.d) || (a.dl ? 0 : 1) - (b.dl ? 0 : 1));
+  if (!rows.length){
+    el.innerHTML = '<div class="empty">'+(mode()==="off" ? "30일 안의 시험·마감이 없습니다." : "앞으로 7일 일정과 30일 안의 시험·마감이 없습니다.")+'</div>';
+    return;
+  }
+  el.innerHTML = rows.map(({d,ev,dl})=>{
+    if (dl){
+      const dd = vtDday(d);
+      return '<div class="ev is-dl"><div class="ev-time">'+(d===t ? "오늘" : shortDate(d)+" "+DOW[new Date(d+"T00:00:00").getDay()])+'</div>'+
+        '<div class="ev-title"><span class="tag dl">마감</span>'+esc(dl.title)+'</div>'+
+        '<span class="ev-dday'+(dd.near?" near":"")+'">'+dd.label+'</span></div>';
+    }
     const label = d===t ? "오늘" : shortDate(d);
     const isTaken = taken.has(ev.id);
     return '<div class="ev'+(isTaken?" taken":"")+'" data-eid="'+esc(ev.id)+'" data-title="'+esc(ev.title)+
@@ -5151,14 +5267,17 @@ async function logSessionToCalendar(name, minutes, date, startTime){
   syncCalendar();
 }
 document.getElementById("calConnect").addEventListener("click", async ()=>{
+  /* 설정 안의 버튼 — 입력한 URL·토큰을 먼저 저장(시트를 닫는 것과 같은 순서)한 뒤 확인한다 */
+  if (document.getElementById("sheet").classList.contains("on")) await closeSheet();
   const m = mode();
   if (m==="off"){ openSheet(); toast("연동 방식을 먼저 선택해 주세요."); return; }
-  setCalStatus("확인 중…","");
   if (m==="script"){
     if (!S.settings.scriptUrl){ openSheet(); toast("웹 앱 URL을 입력해 주세요."); return; }
+    setCalStatus("확인 중…","");
     await syncCalendar();
   } else {
     if (!S.settings.clientId){ openSheet(); toast("클라이언트 ID를 입력해 주세요."); return; }
+    setCalStatus("확인 중…","");
     await requestToken(false);
   }
 });
@@ -5238,7 +5357,8 @@ document.getElementById("gcalOffOpen").addEventListener("click", ()=>{
   el.scrollIntoView({block:"center"}); el.focus();
 });
 document.getElementById("sheetX").addEventListener("click", ()=>document.getElementById("sheetClose").click());
-document.getElementById("sheetClose").addEventListener("click", async ()=>{
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+async function closeSheet(){
   S.settings.calMode = document.getElementById("cfgMode").value;
   S.settings.theme = document.getElementById("cfgTheme").value || "system";
   applyTheme();
@@ -5266,7 +5386,7 @@ document.getElementById("sheetClose").addEventListener("click", async ()=>{
   save();
   renderAll();
   if (mode()==="script" && S.settings.scriptUrl){ syncCalendar(); fetchVaultTasks({silent:true}); fetchGoals({silent:true}); }
-});
+}
 document.getElementById("btnSyncNow").addEventListener("click", ()=>initialSync({render:true}));
 document.getElementById("sheet").addEventListener("click", e=>{
   if (e.target.id==="sheet") document.getElementById("sheetClose").click();
@@ -5294,13 +5414,13 @@ document.getElementById("ddAdd").addEventListener("click", ()=>{
   if(!title || !date){ toast("이름과 날짜를 모두 입력하세요."); return; }
   S.deadlines.push({ id:uid(), title, date });
   document.getElementById("ddTitle").value="";
-  save(); renderDeadlines(); renderHeader(); renderCalendar();
+  save(); renderDeadlines(); renderHeader(); renderCalendar(); renderUpcoming();
 });
 document.getElementById("ddList").addEventListener("click", e=>{
   if(!e.target.closest('[data-act="deldd"]')) return;
   const id = e.target.closest("li").dataset.id;
   S.deadlines = S.deadlines.filter(x=>x.id!==id);
-  save(); renderDeadlines(); renderHeader(); renderCalendar();
+  save(); renderDeadlines(); renderHeader(); renderCalendar(); renderUpcoming();
 });
 
 /* ══ 테마 · 데이터 ══════════════════════════════════════ */
@@ -5365,6 +5485,32 @@ function revealCard(el){
   const sec = el && el.closest("section[data-tab]");
   if (sec && MOBILE.matches && document.body.dataset.mtab !== sec.dataset.tab) showTab(sec.dataset.tab);
 }
+
+/* ══ 데스크톱 2단 ══════════════════════════════════════
+   1101px 이상에서 카드를 두 세로 줄(.dcol)로 옮긴다. 줄마다 높이가 따로라 CSS 그리드로는 빈칸이 생긴다.
+   좁아지면 원래 DOM 순서로 되돌린다 — 모바일 탭 CSS가 .grid>section을 기대한다 */
+const DESK_SPLIT = window.matchMedia("(min-width:1101px)");
+const GRID = document.querySelector(".grid");
+const GRID_CARDS = [...GRID.children];
+const SPLIT_MAIN = ["cardDay","cardTodo","cardTime","cardHabit","cardClosing","cardJournal","cardGoals"];
+const SPLIT_SIDE = ["cardCalendar","cardReview","cardSleep","cardWeek","cardGcal"];
+function applyDeskLayout(){
+  const cols = GRID.querySelector(".dcols");
+  if (DESK_SPLIT.matches && !cols){
+    const wrap = document.createElement("div"); wrap.className = "dcols";
+    const main = document.createElement("div"); main.className = "dcol dcol-main";
+    const side = document.createElement("div"); side.className = "dcol dcol-side";
+    SPLIT_MAIN.forEach(id=>{ const el = document.getElementById(id); if (el) main.appendChild(el); });
+    SPLIT_SIDE.forEach(id=>{ const el = document.getElementById(id); if (el) side.appendChild(el); });
+    GRID_CARDS.forEach(el=>{ if (el.parentNode === GRID) main.appendChild(el); });   /* 목록에 없는 새 카드는 왼쪽 끝 */
+    wrap.append(main, side); GRID.appendChild(wrap);
+  } else if (!DESK_SPLIT.matches && cols){
+    GRID_CARDS.forEach(el=>GRID.appendChild(el));
+    cols.remove();
+  }
+}
+DESK_SPLIT.addEventListener("change", ()=>{ applyDeskLayout(); renderGoals(); });   /* 그래프 폭이 카드 폭을 따른다 */
+applyDeskLayout();
 document.getElementById("mnav").addEventListener("click", e=>{
   const b = e.target.closest("button[data-go]"); if(!b) return;
   showTab(b.dataset.go, true);
@@ -5403,7 +5549,7 @@ document.getElementById("undoBtn").addEventListener("click", ()=>{
 });
 
 
-/* ══ v2 상태 요약 · 모바일 배지 · 짧은 피드백 ═════════════════════ */
+/* ══ 상태 요약 · 모바일 배지 · 짧은 피드백 ═════════════════════ */
 function pulseValue(id){ const el=document.getElementById(id); if(!el) return; el.classList.remove("is-updated"); void el.offsetWidth; el.classList.add("is-updated"); }
 function updateDashboardSummary(){
   const t=today(), tomorrow=addDays(t,1);
@@ -5411,26 +5557,27 @@ function updateDashboardSummary(){
     vaultTasks.filter(x=>x.status==="todo" && x.due && x.due<=t).length;
   const dueReviews=S.reviews.filter(x=>x.nextDue<=t).length;
   const studyMin=S.sessions.filter(x=>x.date===t).reduce((a,x)=>a+(x.minutes||0),0);
-  /* closeCount 요소의 textContent를 읽어오던 이전 방식은 renderClosing()이
-     먼저 실행된다는 순서에 암묵적으로 의존하고 있었다 — 호출 순서가 바뀌면
-     조용히 틀린 값을 보여주므로, closingSteps()에서 직접 계산한다. */
+  /* 닫기 단계 수는 closingSteps()에서 직접 계산한다 — 다른 렌더 함수가 그린 글자에 기대지 않는다 */
   const closeDoneN = closingSteps().filter(x=>x.ok).length;
   const close = closeDoneN + "/5";
-  /* 지난 마감일도 계속 '임박'으로 세던 문제 — 하한(오늘 이후)을 추가했다 */
+  /* 임박 마감은 오늘~7일 뒤만 센다(지난 마감 제외) */
   const nearDeadlines=S.deadlines.filter(x=>x.date>=t && x.date<=addDays(t,7)).length +
     vaultDeadlines().filter(x=>x.due>=t && x.due<=addDays(t,7)).length;
   /* 공부 탭 배지 — 오늘 복습할 질문 수 */
   const reviewPlans=S.reviews.filter(x=>x.nextDue<=t).length;
   const values={sumClosing:close,sumTodos:String(activeTodos),sumStudy:fmtClock(studyMin),sumReview:String(dueReviews)};
   Object.entries(values).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=v;});
-  const badges={navToday:activeTodos+dueReviews,navStudy:reviewPlans,navPlan:nearDeadlines,navLook:(S.habits||[]).filter(h=>!h.log||!h.log[t]).length};
+  /* 배지는 그 탭에 있는 카드만 센다 — 오늘: 할 일 + 체크 안 한 습관, 공부: 복습, 일정: 마감 */
+  const habitsLeft=(S.habits||[]).filter(h=>!h.log||!h.log[t]).length;
+  const badges={navToday:activeTodos+habitsLeft,navStudy:reviewPlans,navPlan:nearDeadlines};
   Object.entries(badges).forEach(([id,n])=>{const el=document.getElementById(id);if(!el)return;el.textContent=String(n);el.dataset.empty=n?"false":"true";});
+  /* 돌아보기는 숫자 없이 점 하나 — 저녁 6시 이후 하루 닫기가 남았을 때만 */
+  const look=document.getElementById("navLook");
+  if(look){const due=closeDoneN<5 && new Date().getHours()>=18;look.textContent="";look.classList.add("is-dot");look.dataset.empty=due?"false":"true";}
 }
 
 /* ══ 전체 렌더 ══════════════════════════════════════════ */
-/* 각 단계를 개별 try/catch로 감싼다 — 이전에는 한 단계에서 예외가 나면
-   renderAll() 전체가 중단되어 그 아래 카드들이 텅 빈 채로 남았다.
-   한 단계가 실패해도 나머지는 계속 그려지도록 격리한다. */
+/* 각 단계를 개별 try/catch로 감싼다 — 한 단계가 실패해도 나머지 카드는 계속 그려진다. */
 function renderAll(){
   const steps = [
     renderHeader, renderLedger, renderCalendar, renderTodos, renderVaultTasks, renderTimetable,
@@ -5488,9 +5635,8 @@ function renderAll(){
     }, 500);
   }
 
-  /* 폰에서 PWA를 며칠씩 열어두면 부팅 때 한 번 읽은 캘린더·Tasks.md가 그대로
-     남아 있었다(재조회는 날짜가 바뀔 때 볼트만). 화면에 다시 돌아오면
-     새로 읽고, 열려 있는 동안에도 10분마다 읽는다. 최소 간격 60초. */
+  /* PWA를 며칠씩 열어 둬도 캘린더·Tasks.md가 묵지 않게, 화면에 다시 돌아오면
+     새로 읽고 열려 있는 동안에도 10분마다 읽는다. 최소 간격 60초. */
   let lastRefresh = Date.now();
   function refreshRemote(reason){
     if (mode()==="off") return;

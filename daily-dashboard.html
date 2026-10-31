@@ -1511,14 +1511,6 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       </div>
       <div class="hint">브라우저 저장소에 보관됩니다. 기기를 옮기거나 브라우저 데이터를 지우기 전에 내보내 두세요.</div>
     </div>
-    <div class="field">
-      <label for="cfgImportJson">복습 질문·D-day 한꺼번에 넣기 (JSON)</label>
-      <textarea id="cfgImportJson" rows="4" placeholder='{"reviews":[{"subject":"","q":"","a":""}],"deadlines":[{"title":"","date":"2026-12-10"}]}'></textarea>
-      <div class="row mt-6">
-        <button class="ghost" id="importApplyJson">붙여넣은 내용 적용</button>
-      </div>
-      <div class="hint">예전 계획 JSON도 그대로 붙여 넣을 수 있습니다. 공부 계획(plans)은 건너뜁니다 — 계획은 Tasks.md에서 관리합니다.</div>
-    </div>
 
     <div class="sheet-foot">
       <button class="btn" id="sheetClose">저장하고 닫기</button>
@@ -1625,7 +1617,7 @@ function save(){
      온다. 이때 res.json()이 던지는 예외를 "연결 실패"와 구분해 알려준다.
    반환: 파싱된 JSON 객체, 실패 시 { ok:false, error, network:true } */
 const BRIDGE_TIMEOUT = 20000;
-const BRIDGE_READ_ACTIONS = { list:1, loadState:1, getPlan:1, getTasks:1, getGoals:1, getRoutine:1 };
+const BRIDGE_READ_ACTIONS = { list:1, loadState:1, getTasks:1, getGoals:1, getRoutine:1 };
 async function bridgeFetch(payload){
   const url = (S.settings.scriptUrl||"").trim();
   if (!url) return { ok:false, error:"웹 앱 URL 없음", network:true };
@@ -4043,59 +4035,6 @@ document.getElementById("planMigrate").addEventListener("click", async ()=>{
   list.forEach(p=>{ p.migratedOn = today(); });
   save(); renderAll();
   toast("공부 계획 "+list.length+"개를 Tasks.md로 옮겼습니다.");
-});
-
-/* ── 복습 질문·D-day 붙여넣기 ─────────────────────────────
-   '계획 JSON' 형식을 받되 plans·subjects는 쓰지 않는다(공부 계획은 Tasks.md). */
-function normalizeImport(obj){
-  if (!obj || typeof obj !== "object") throw new Error("JSON 형식이 아닙니다");
-  const isDate = s => typeof s==="string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
-  const deadlines = (Array.isArray(obj.deadlines)?obj.deadlines:[])
-    .filter(d=>d && typeof d.title==="string" && d.title.trim() && isDate(d.date))
-    .map(d=>({ title:d.title.trim(), date:d.date }));
-  const reviews = (Array.isArray(obj.reviews)?obj.reviews:[])
-    .map(r=>({
-      subject: typeof r.subject==="string" ? r.subject.trim() : "",
-      content: String(r.q || r.question || r.content || "").trim(),
-      answer:  String(r.a || r.answer || "").trim()
-    }))
-    .filter(r=>r.content);
-  const skipped = Array.isArray(obj.plans) ? obj.plans.length : 0;
-  if (!deadlines.length && !reviews.length) throw new Error("불러올 복습 질문이나 D-day가 없습니다" + (skipped ? " (공부 계획은 Tasks.md에서 관리합니다)" : ""));
-  return { name: typeof obj.name==="string" ? obj.name : "", deadlines, reviews, skipped };
-}
-async function applyImport(seed){
-  const msg = (seed.name ? "["+seed.name+"]\n\n" : "") +
-    "불러올까요?\n\n· 복습 질문 "+seed.reviews.length+"개, D-day "+seed.deadlines.length+"개\n"+
-    "· 기존 데이터는 지워지지 않고, 같은 항목은 건너뜁니다."+
-    (seed.skipped ? "\n· 공부 계획 "+seed.skipped+"개는 건너뜁니다 — 계획은 Tasks.md에서 관리합니다." : "");
-  if (!(await confirmDialog(msg))) return false;
-  let nD = 0;
-  seed.deadlines.forEach(d=>{
-    if (S.deadlines.some(x=>x.title===d.title)) return;
-    S.deadlines.push({ id:uid(), title:d.title, date:d.date }); nD++;
-  });
-  let nR = 0;
-  seed.reviews.forEach(r=>{
-    if (S.reviews.some(x=>x.content===r.content)) return;
-    S.reviews.push({ id:uid(), content:r.content, answer:r.answer, subject:r.subject,
-      box:0, learnedOn:today(), nextDue: today(), correct:0, missed:0 });   /* 받은 질문은 오늘 바로 한 번 */
-    nR++;
-  });
-  save(); renderAll();
-  toast("복습 "+nR+"개, D-day "+nD+"개를 추가했습니다.");
-  return true;
-}
-document.getElementById("importApplyJson").addEventListener("click", async ()=>{
-  const ta = document.getElementById("cfgImportJson");
-  const raw = ta.value.trim();
-  if (!raw){ toast("붙여넣은 내용이 없습니다."); return; }
-  try{
-    if (await applyImport(normalizeImport(JSON.parse(raw)))){
-      ta.value = "";
-      document.getElementById("sheetClose").click();
-    }
-  }catch(err){ toast("적용 실패: " + err.message); }
 });
 
 /* ══ 습관 ═══════════════════════════════════════════════ */

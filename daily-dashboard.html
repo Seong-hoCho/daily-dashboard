@@ -675,7 +675,15 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 .gcal-off{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;font-size:13px;color:var(--ink2)}
 .gcal-off[hidden]{display:none}
 .gcal-off>span{flex:1;min-width:200px}
-#cardGcal.is-off .gcal-acts,#cardGcal.is-off #evList,#cardGcal.is-off details.help,#cardGcal.is-off #calStatus{display:none}
+#cardGcal.is-off #calStatus,#cardGcal.is-off #calRefresh{display:none}
+#cardGcal.is-off #gcalOff{margin-bottom:4px}
+.ev .tag.dl{margin-right:6px;vertical-align:1px}
+.ev .ev-dday{font-family:var(--f-num);font-size:11px;color:var(--ink3);white-space:nowrap;padding-top:1px}
+.ev .ev-dday.near{color:var(--m-dl);font-weight:600}
+.ev.is-dl .ev-time{color:var(--m-dl)}
+.sheet-help{margin-top:6px}
+.field label.switch{display:flex;align-items:center;gap:8px;font-weight:500;color:var(--ink)}
+.field label.switch input{width:20px;height:20px;min-height:0;margin:0;flex:none;accent-color:var(--accent)}
 #cardGcal.is-off>h2{margin-bottom:10px}
 
 /* ── 설정 창: 성격별 묶음, 닫기(×), 바닥에 붙는 저장 버튼 ── */
@@ -1345,40 +1353,20 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
     </section>
 
     <!-- 구글 캘린더 -->
+    <!-- 다가오는 일정·마감 — 구글 캘린더 7일 + 시험·마감 30일을 날짜순으로. 연결·내보내기는 설정의 '캘린더·동기화' -->
     <section data-tab="plan" class="card wide" id="cardGcal">
-      <h2>구글 캘린더
-        <span class="eyebrow" id="calMode">간편 연동</span>
+      <h2>다가오는 일정·마감
         <span class="spacer"></span>
         <span class="status" id="calStatus" aria-live="polite"><span class="dot"></span>연결 안 됨</span>
+        <button class="ghost sm" id="calRefresh">새로고침</button>
       </h2>
       <div class="gcal-off" id="gcalOff" hidden>
-        <span>구글 캘린더 연동을 쓰지 않는 중입니다. 켜면 일정이 달력과 오늘 계획에 함께 나옵니다.</span>
+        <span>구글 캘린더 연동이 꺼져 있어 시험·마감만 보입니다. 켜면 앞으로 7일 일정도 함께 나옵니다.</span>
         <button type="button" class="ghost sm" id="gcalOffOpen">설정에서 켜기</button>
       </div>
-      <div class="row gcal-acts">
-        <button class="btn sm" id="calConnect">연결 확인</button>
-        <button class="ghost" id="calRefresh">새로고침</button>
-        <button class="ghost" id="calPush">할 일을 캘린더로 보내기</button>
-        <span class="grow"></span>
-        <label class="switch"><input type="checkbox" id="logSessions"> 공부 기록도 캘린더에 남기기</label>
-      </div>
       <div id="evList" class="mt-12">
-        <div class="empty">설정에서 연동을 마치면 앞으로 7일간의 일정이 표시되고, 위 달력에도 함께 나타납니다.</div>
+        <div class="empty">앞으로 7일 일정과 30일 안의 시험·마감이 날짜순으로 나옵니다.</div>
       </div>
-      <details class="help">
-        <summary>연동 설정 방법</summary>
-        <p><b>방법 A · 간편 연동 (Apps Script · 권장)</b><br>구글 클라우드 콘솔이 필요 없습니다. 함께 받은 <code>google-calendar-bridge.txt</code> 파일을 사용합니다.</p>
-        <ol>
-          <li><code>script.google.com</code>에 접속해 <b>새 프로젝트</b>를 만듭니다.</li>
-          <li>기본 코드를 모두 지우고 브리지 코드를 붙여넣습니다.</li>
-          <li>맨 윗줄 <code>TOKEN</code> 값을 본인만 아는 문자열로 바꾸고 저장합니다.</li>
-          <li>함수 목록에서 <code>setup</code>을 골라 실행하고 권한을 승인합니다.</li>
-          <li><b>배포 → 새 배포 → 웹 앱</b>, <b>실행: 나</b> / <b>액세스 권한: 모든 사용자</b>로 배포합니다.</li>
-          <li>발급된 <code>/exec</code> URL과 토큰을 이 대시보드 설정에 입력합니다.</li>
-        </ol>
-        <p><b>참고</b> — 이 웹 앱은 캘린더뿐 아니라 대시보드 데이터 전체를 저장해 다른 기기와 동기화하는 데도 함께 쓰입니다(구글 드라이브에 파일 하나로 저장됩니다). 브리지 코드를 새 버전으로 바꿨다면 <code>setup</code>을 한 번 더 실행해 드라이브 접근 권한을 승인한 뒤 <b>배포 → 배포 관리 → 새 버전으로 배포</b>까지 마쳐야 반영됩니다.</p>
-        <p><b>방법 B · 직접 연동 (OAuth)</b><br>Google Cloud Console에서 Calendar API를 켜고 OAuth 클라이언트 ID를 발급받아 설정에 입력합니다. 이 페이지는 <code>https://</code> 주소에 올려야 하며, 그 주소를 <b>승인된 자바스크립트 원본</b>에 등록해야 합니다.</p>
-      </details>
     </section>
 
   </div>
@@ -1472,6 +1460,22 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       </div>
     </div>
     <div class="field">
+      <label>연결 상태</label>
+      <div class="row">
+        <button class="btn sm" id="calConnect">저장하고 연결 확인</button>
+        <span class="status" data-cal-status aria-live="polite"><span class="dot"></span>연결 안 됨</span>
+      </div>
+    </div>
+    <div class="field">
+      <label class="switch"><input type="checkbox" id="logSessions"> 공부 기록도 캘린더에 남기기</label>
+      <div class="hint">시간 추적에서 기록을 끝낼 때마다 그 시간이 캘린더 일정으로도 남습니다.</div>
+    </div>
+    <div class="field">
+      <label>대시보드 할 일 보내기</label>
+      <div class="row"><button class="ghost" id="calPush">할 일을 캘린더로 보내기</button></div>
+      <div class="hint">날짜가 있고 아직 캘린더에 없는 '대시보드 할 일'을 한꺼번에 일정으로 등록합니다.</div>
+    </div>
+    <div class="field">
       <label for="cfgDuration">시간을 넣은 할 일의 일정 길이 (분)</label>
       <input type="number" id="cfgDuration" min="5" max="600" step="5" class="num-in">
     </div>
@@ -1483,6 +1487,20 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       </div>
       <div class="hint">위 캘린더 연동(간편 연동 · Apps Script)을 설정해 두면, 데이터 전체가 그 웹 앱을 통해 자동으로 저장되고 다른 기기와 동기화됩니다. 새 기기에서는 같은 웹 앱 URL과 토큰만 입력하면 최신 데이터를 받아옵니다.</div>
     </div>
+      <details class="help sheet-help">
+      <summary>연동 설정 방법</summary>
+      <p><b>방법 A · 간편 연동 (Apps Script · 권장)</b><br>구글 클라우드 콘솔이 필요 없습니다. 함께 받은 <code>google-calendar-bridge.txt</code> 파일을 사용합니다.</p>
+      <ol>
+        <li><code>script.google.com</code>에 접속해 <b>새 프로젝트</b>를 만듭니다.</li>
+        <li>기본 코드를 모두 지우고 브리지 코드를 붙여넣습니다.</li>
+        <li>맨 윗줄 <code>TOKEN</code> 값을 본인만 아는 문자열로 바꾸고 저장합니다.</li>
+        <li>함수 목록에서 <code>setup</code>을 골라 실행하고 권한을 승인합니다.</li>
+        <li><b>배포 → 새 배포 → 웹 앱</b>, <b>실행: 나</b> / <b>액세스 권한: 모든 사용자</b>로 배포합니다.</li>
+        <li>발급된 <code>/exec</code> URL과 토큰을 이 대시보드 설정에 입력합니다.</li>
+      </ol>
+      <p><b>참고</b> — 이 웹 앱은 캘린더뿐 아니라 대시보드 데이터 전체를 저장해 다른 기기와 동기화하는 데도 함께 쓰입니다(구글 드라이브에 파일 하나로 저장됩니다). 브리지 코드를 새 버전으로 바꿨다면 <code>setup</code>을 한 번 더 실행해 드라이브 접근 권한을 승인한 뒤 <b>배포 → 배포 관리 → 새 버전으로 배포</b>까지 마쳐야 반영됩니다.</p>
+      <p><b>방법 B · 직접 연동 (OAuth)</b><br>Google Cloud Console에서 Calendar API를 켜고 OAuth 클라이언트 ID를 발급받아 설정에 입력합니다. 이 페이지는 <code>https://</code> 주소에 올려야 하며, 그 주소를 <b>승인된 자바스크립트 원본</b>에 등록해야 합니다.</p>
+    </details>
 
     <h4 class="sheet-group">데이터</h4>
     <div class="field">
@@ -1525,7 +1543,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 <nav class="mnav" id="mnav" aria-label="화면 전환">
   <button data-go="today" class="on"><b>오늘 <i class="nav-badge" id="navToday" aria-label="오늘 남은 할 일·습관 수">0</i></b><span>계획·할 일</span></button>
   <button data-go="study"><b>공부 <i class="nav-badge" id="navStudy" aria-label="오늘 복습할 질문 수">0</i></b><span>시간·복습</span></button>
-  <button data-go="plan"><b>일정 <i class="nav-badge" id="navPlan" aria-label="7일 안의 마감 수">0</i></b><span>달력</span></button>
+  <button data-go="plan"><b>일정 <i class="nav-badge" id="navPlan" aria-label="7일 안의 마감 수">0</i></b><span>달력·마감</span></button>
   <button data-go="look"><b>돌아보기 <i class="nav-badge" id="navLook" aria-label="하루 닫기 남음">0</i></b><span>하루 닫기·기록</span></button>
 </nav>
 <div class="undo" id="undo" role="status"><span id="undoMsg"></span><button id="undoBtn">되돌리기</button></div>
@@ -2433,6 +2451,7 @@ function renderVaultTasks(){
   if (!listEl) return;
   renderGoalStrip();   /* 열린 #이정표가 목표 카드의 이정표 띠에 들어간다 */
   renderTrPick();      /* 시간 추적의 고르기 목록도 같은 미완료 항목을 쓴다 */
+  renderUpcoming();    /* Tasks.md #deadline도 다가오는 일정·마감에 들어간다 */
   try{ renderDay(); }catch(err){ console.error("렌더 오류: renderDay", err); }   /* 블록 아래 할 일 */
   renderPlanMigrate();
 
@@ -4914,13 +4933,12 @@ function calConfigured(){
   return (m === "script" && !!(S.settings.scriptUrl||"").trim()) || (m === "oauth" && !!(S.settings.clientId||"").trim());
 }
 function setCalStatus(text, kind){
-  document.getElementById("calStatus").innerHTML =
+  const html =
     '<span class="dot'+(kind==="live"?" live":kind==="err"?" err":"")+'"></span>'+esc(text);
+  document.querySelectorAll("#calStatus,[data-cal-status]").forEach(el=>{ el.innerHTML = html; });
 }
 function renderModeLabel(){
   const m = mode();
-  document.getElementById("calMode").textContent =
-    m==="script" ? "간편 연동" : m==="oauth" ? "직접 연동" : "사용 안 함";
   const card = document.getElementById("cardGcal");
   if (card) card.classList.toggle("is-off", m==="off");
   const off = document.getElementById("gcalOff");
@@ -5123,16 +5141,38 @@ function renderCalToday(){
 }
 function renderEventList(){
   try{ renderCalToday(); }catch(err){ console.error("렌더 오류: renderCalToday", err); }
+  renderUpcoming();
+}
+/* 다가오는 일정·마감 — 캘린더 일정(앞으로 7일)과 시험·마감(30일 안, 설정 D-day + Tasks.md #deadline)을
+   날짜순 한 목록으로. 같은 날이면 마감이 먼저 */
+function renderUpcoming(){
   const el = document.getElementById("evList"), t = today();
+  if (!el) return;
   const taken = importedIds();
   const rows = [];
-  for (let i=0;i<8;i++){
-    const d = addDays(t,i);
-    (eventsByDate[d]||[]).slice().sort((a,b)=>(a.time||"").localeCompare(b.time||""))
-      .forEach(ev=>rows.push({ d, ev }));
+  if (mode() !== "off"){
+    for (let i=0;i<8;i++){
+      const d = addDays(t,i);
+      (eventsByDate[d]||[]).slice().sort((a,b)=>(a.time||"").localeCompare(b.time||""))
+        .forEach(ev=>rows.push({ d, ev }));
+    }
   }
-  if (!rows.length){ el.innerHTML = '<div class="empty">앞으로 7일간 등록된 일정이 없습니다.</div>'; return; }
-  el.innerHTML = rows.map(({d,ev})=>{
+  const until = addDays(t,30), seen = new Set();
+  S.deadlines.filter(x=>x.date>=t && x.date<=until).map(x=>({ d:x.date, title:x.title }))
+    .concat(vaultDeadlines().filter(x=>x.due>=t && x.due<=until).map(x=>({ d:x.due, title:x.text })))
+    .forEach(x=>{ const k = x.d+"|"+x.title; if (seen.has(k)) return; seen.add(k); rows.push({ d:x.d, dl:x }); });
+  rows.sort((a,b)=> a.d.localeCompare(b.d) || (a.dl ? 0 : 1) - (b.dl ? 0 : 1));
+  if (!rows.length){
+    el.innerHTML = '<div class="empty">'+(mode()==="off" ? "30일 안의 시험·마감이 없습니다." : "앞으로 7일 일정과 30일 안의 시험·마감이 없습니다.")+'</div>';
+    return;
+  }
+  el.innerHTML = rows.map(({d,ev,dl})=>{
+    if (dl){
+      const dd = vtDday(d);
+      return '<div class="ev is-dl"><div class="ev-time">'+(d===t ? "오늘" : shortDate(d)+" "+DOW[new Date(d+"T00:00:00").getDay()])+'</div>'+
+        '<div class="ev-title"><span class="tag dl">마감</span>'+esc(dl.title)+'</div>'+
+        '<span class="ev-dday'+(dd.near?" near":"")+'">'+dd.label+'</span></div>';
+    }
     const label = d===t ? "오늘" : shortDate(d);
     const isTaken = taken.has(ev.id);
     return '<div class="ev'+(isTaken?" taken":"")+'" data-eid="'+esc(ev.id)+'" data-title="'+esc(ev.title)+
@@ -5235,14 +5275,17 @@ async function logSessionToCalendar(name, minutes, date, startTime){
   syncCalendar();
 }
 document.getElementById("calConnect").addEventListener("click", async ()=>{
+  /* 설정 안의 버튼 — 입력한 URL·토큰을 먼저 저장(시트를 닫는 것과 같은 순서)한 뒤 확인한다 */
+  if (document.getElementById("sheet").classList.contains("on")) await closeSheet();
   const m = mode();
   if (m==="off"){ openSheet(); toast("연동 방식을 먼저 선택해 주세요."); return; }
-  setCalStatus("확인 중…","");
   if (m==="script"){
     if (!S.settings.scriptUrl){ openSheet(); toast("웹 앱 URL을 입력해 주세요."); return; }
+    setCalStatus("확인 중…","");
     await syncCalendar();
   } else {
     if (!S.settings.clientId){ openSheet(); toast("클라이언트 ID를 입력해 주세요."); return; }
+    setCalStatus("확인 중…","");
     await requestToken(false);
   }
 });
@@ -5322,7 +5365,8 @@ document.getElementById("gcalOffOpen").addEventListener("click", ()=>{
   el.scrollIntoView({block:"center"}); el.focus();
 });
 document.getElementById("sheetX").addEventListener("click", ()=>document.getElementById("sheetClose").click());
-document.getElementById("sheetClose").addEventListener("click", async ()=>{
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+async function closeSheet(){
   S.settings.calMode = document.getElementById("cfgMode").value;
   S.settings.theme = document.getElementById("cfgTheme").value || "system";
   applyTheme();
@@ -5350,7 +5394,7 @@ document.getElementById("sheetClose").addEventListener("click", async ()=>{
   save();
   renderAll();
   if (mode()==="script" && S.settings.scriptUrl){ syncCalendar(); fetchVaultTasks({silent:true}); fetchGoals({silent:true}); }
-});
+}
 document.getElementById("btnSyncNow").addEventListener("click", ()=>initialSync({render:true}));
 document.getElementById("sheet").addEventListener("click", e=>{
   if (e.target.id==="sheet") document.getElementById("sheetClose").click();
@@ -5378,13 +5422,13 @@ document.getElementById("ddAdd").addEventListener("click", ()=>{
   if(!title || !date){ toast("이름과 날짜를 모두 입력하세요."); return; }
   S.deadlines.push({ id:uid(), title, date });
   document.getElementById("ddTitle").value="";
-  save(); renderDeadlines(); renderHeader(); renderCalendar();
+  save(); renderDeadlines(); renderHeader(); renderCalendar(); renderUpcoming();
 });
 document.getElementById("ddList").addEventListener("click", e=>{
   if(!e.target.closest('[data-act="deldd"]')) return;
   const id = e.target.closest("li").dataset.id;
   S.deadlines = S.deadlines.filter(x=>x.id!==id);
-  save(); renderDeadlines(); renderHeader(); renderCalendar();
+  save(); renderDeadlines(); renderHeader(); renderCalendar(); renderUpcoming();
 });
 
 /* ══ 테마 · 데이터 ══════════════════════════════════════ */

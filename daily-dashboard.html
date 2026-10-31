@@ -909,6 +909,9 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
    모바일: D-day 한 줄, 과목 칸 하나, 지난 수면은 읽기 줄, 큰 체크
    데스크톱(1101px 이상): 2단 — 왼쪽은 오늘 쓰는 것, 오른쪽은 곁눈으로 보는 것 */
 .sl-view{display:none}
+/* 하루 닫기는 돌아보기 탭에 있지만 저녁에 직접 채우는 카드 — 지난 것을 보는 카드처럼 옅게 두지 않는다 */
+#cardClosing.card{background:var(--card);box-shadow:var(--shadow);content-visibility:visible}
+.nav-badge.is-dot{min-width:8px;width:8px;height:8px;padding:0;vertical-align:6px}
 .week-empty{flex:1;align-self:center;padding:0 12px}
 
 @media (max-width:820px){
@@ -928,6 +931,8 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
   .db-tasks li{align-items:flex-start}
   .db-tasks li .t-text,.vault-more>span,.tr-what,.tt-subj,.tt-task{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
   .db-tasks li .t-text{padding-top:2px}
+  /* 오늘 탭 순서: 오늘 계획 → 할 일 → 수면(아침에 먼저 적는다) → 습관(하루를 지나며 채운다) */
+  #cardSleep{order:3}
   /* 손가락 크기 */
   .check{width:28px;height:28px}
   .check.on::after{left:9px;top:4px;width:7px;height:13px}
@@ -1017,7 +1022,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       </details>
     </section>
     <!-- 오늘 마감 -->
-    <section data-tab="today" class="card wide" id="cardClosing">
+    <section data-tab="look" class="card wide" id="cardClosing">
       <span class="close-stamp" id="closeStamp" hidden>오늘<br>닫음</span>
       <h2>하루 닫기 <span class="count" id="closeCount" aria-live="polite">0/5</span>
         <span class="spacer"></span>
@@ -1518,10 +1523,10 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 </div>
 
 <nav class="mnav" id="mnav" aria-label="화면 전환">
-  <button data-go="today" class="on"><b>오늘 <i class="nav-badge" id="navToday" aria-label="오늘 미완료 수">0</i></b><span>계획·할 일</span></button>
-  <button data-go="study"><b>공부 <i class="nav-badge" id="navStudy" aria-label="공부 미완료 수">0</i></b><span>시간·복습</span></button>
-  <button data-go="plan"><b>일정 <i class="nav-badge" id="navPlan" aria-label="일정 수">0</i></b><span>달력</span></button>
-  <button data-go="look"><b>돌아보기 <i class="nav-badge" id="navLook" aria-label="돌아보기 항목 수">0</i></b><span>주간·기록</span></button>
+  <button data-go="today" class="on"><b>오늘 <i class="nav-badge" id="navToday" aria-label="오늘 남은 할 일·습관 수">0</i></b><span>계획·할 일</span></button>
+  <button data-go="study"><b>공부 <i class="nav-badge" id="navStudy" aria-label="오늘 복습할 질문 수">0</i></b><span>시간·복습</span></button>
+  <button data-go="plan"><b>일정 <i class="nav-badge" id="navPlan" aria-label="7일 안의 마감 수">0</i></b><span>달력</span></button>
+  <button data-go="look"><b>돌아보기 <i class="nav-badge" id="navLook" aria-label="하루 닫기 남음">0</i></b><span>하루 닫기·기록</span></button>
 </nav>
 <div class="undo" id="undo" role="status"><span id="undoMsg"></span><button id="undoBtn">되돌리기</button></div>
 <div class="tip" id="tip"></div>
@@ -1973,7 +1978,7 @@ document.getElementById("ledgerGo").addEventListener("click", ()=>{
   card.scrollIntoView({ behavior:"smooth", block:"center" });
   if (!trRun) setTimeout(()=>{ const b = document.getElementById("trStartBtn"); if (b) b.focus(); }, 420);
 });
-setInterval(()=>{ if (document.visibilityState === "visible") { try{ renderLedger(); }catch(e){} } }, 60000);
+setInterval(()=>{ if (document.visibilityState === "visible") { try{ renderLedger(); updateDashboardSummary(); }catch(e){} } }, 60000);
 
 /* ══════════════════════════════════════════════════════
    달력
@@ -5528,8 +5533,13 @@ function updateDashboardSummary(){
   const reviewPlans=S.reviews.filter(x=>x.nextDue<=t).length;
   const values={sumClosing:close,sumTodos:String(activeTodos),sumStudy:fmtClock(studyMin),sumReview:String(dueReviews)};
   Object.entries(values).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=v;});
-  const badges={navToday:activeTodos+dueReviews,navStudy:reviewPlans,navPlan:nearDeadlines,navLook:(S.habits||[]).filter(h=>!h.log||!h.log[t]).length};
+  /* 배지는 그 탭에 있는 카드만 센다 — 오늘: 할 일 + 체크 안 한 습관, 공부: 복습, 일정: 마감 */
+  const habitsLeft=(S.habits||[]).filter(h=>!h.log||!h.log[t]).length;
+  const badges={navToday:activeTodos+habitsLeft,navStudy:reviewPlans,navPlan:nearDeadlines};
   Object.entries(badges).forEach(([id,n])=>{const el=document.getElementById(id);if(!el)return;el.textContent=String(n);el.dataset.empty=n?"false":"true";});
+  /* 돌아보기는 숫자 없이 점 하나 — 저녁 6시 이후 하루 닫기가 남았을 때만 */
+  const look=document.getElementById("navLook");
+  if(look){const due=closeDoneN<5 && new Date().getHours()>=18;look.textContent="";look.classList.add("is-dot");look.dataset.empty=due?"false":"true";}
 }
 
 /* ══ 전체 렌더 ══════════════════════════════════════════ */

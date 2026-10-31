@@ -693,6 +693,9 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 .sheet-confirm{max-width:380px;padding-bottom:22px}
 .confirm-msg{margin-top:10px;white-space:pre-line;font-size:13px;color:var(--ink2)}
 .confirm-acts{margin-top:20px;justify-content:flex-end}
+.confirm-input{width:100%;margin-top:12px}
+/* Tasks.md 결과·사유(브리지 v19) — 기록한 결과라 파란 펜 */
+.t-meta .res{font-size:11px;color:var(--accent);font-weight:600}
 
 /* ── 모바일 하단 탭 · 배지 · 피드백 ── */
 .mnav{box-shadow:0 -6px 20px -12px rgba(26,34,56,.25)}
@@ -1456,6 +1459,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
   <div class="sheet-in sheet-confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMsg">
     <h3 id="confirmTitle">확인</h3>
     <div class="hint confirm-msg" id="confirmMsg"></div>
+    <input type="text" class="confirm-input" id="confirmInput" hidden aria-labelledby="confirmTitle" maxlength="120">
     <div class="row confirm-acts">
       <button class="ghost" id="confirmCancel">취소</button>
       <button class="btn" id="confirmOk">확인</button>
@@ -1724,6 +1728,27 @@ function toast(msg){
 /* ══ 커스텀 확인 모달 (window.confirm 대체) ═══════════════
    대시보드 톤(둥근 모서리·소프트 섀도)에 맞지 않고 스타일링도 안 되는
    네이티브 confirm() 대신 설정 시트와 같은 .sheet 오버레이를 재사용한다. */
+/* 한 줄 입력이 붙은 확인 창 — '확인'이면 입력값(빈 문자열 가능), '취소'·Esc면 null */
+function promptDialog(msg, opts){
+  opts = opts || {};
+  const inp = document.getElementById("confirmInput"), title = document.getElementById("confirmTitle");
+  const okBtn = document.getElementById("confirmOk");
+  const prevTitle = title.textContent, prevOk = okBtn.textContent;
+  title.textContent = opts.title || "입력";
+  okBtn.textContent = opts.okLabel || "확인";
+  inp.hidden = false; inp.value = opts.value || ""; inp.placeholder = opts.placeholder || "";
+  const onKey = e=>{ if (e.key === "Enter" && !e.isComposing){ e.preventDefault(); okBtn.click(); } };
+  inp.addEventListener("keydown", onKey);
+  const p = confirmDialog(msg).then(ok=>{
+    const v = inp.value;
+    inp.removeEventListener("keydown", onKey);
+    inp.hidden = true; inp.value = "";
+    title.textContent = prevTitle; okBtn.textContent = prevOk;
+    return ok ? v.replace(/\s+/g, " ").trim() : null;
+  });
+  inp.focus();
+  return p;
+}
 function confirmDialog(msg){
   return new Promise(resolve=>{
     document.getElementById("confirmMsg").textContent = msg;
@@ -2315,7 +2340,9 @@ function vaultRowHtml(x){
   else if (x.priority === "low") meta.push('<span class="pri low">낮음</span>');
   if (x.recurrence) meta.push('<span class="tag">'+esc(x.recurrence)+'</span>');
   if (x.status === "done" && x.doneOn) meta.push('<span class="at">완료 '+shortDate(x.doneOn)+'</span>');
-  if (x.status === "cancelled") meta.push('<span class="at">취소</span>');
+  if (x.status === "cancelled") meta.push('<span class="at">취소'+(x.cancelledOn ? ' '+shortDate(x.cancelledOn) : '')+'</span>');
+  if (x.result) meta.push('<span class="res">결과: '+esc(x.result)+'</span>');
+  if (x.reason) meta.push('<span class="res">이유: '+esc(x.reason)+'</span>');
   /* 취소(- [-])는 체크 대상이 아니다 — 원본을 옵시디언에서 정리하는 편이 맞다 */
   const lead = (x.status === "cancelled")
     ? '<i class="dot"></i>'
@@ -3020,6 +3047,11 @@ let vaultBusy = false;
    Map으로 항목별 타이머를 독립적으로 관리한다. */
 const vaultVerifyTimers = new Map();
 
+/* 브리지 v19부터 getTasks 항목에 result·reason 키가 있다 */
+function vaultResultsSupported(){ return vaultTasks.length > 0 && ("result" in vaultTasks[0]); }
+function vtWantsResult(x){
+  return (x.tags||[]).indexOf("#이정표") > -1 || /결과|발표|합격|점수|성적/.test(x.text || "");
+}
 async function vaultToggle(li){
   if (vaultBusy){ toast("이전 요청을 처리 중입니다."); return; }
   const id = li.dataset.vid || null;
@@ -3029,12 +3061,22 @@ async function vaultToggle(li){
 
   const want = (task.status !== "done");
 
+  /* 결과가 남아야 하는 항목(#이정표·'결과' 등)은 체크할 때 결과 한 줄을 묻는다(브리지 v19 — [결과:: …]).
+     옛 브리지는 result를 모르고 버리므로 묻지 않는다 */
+  const op = { type:"toggle", id: task.id, line: task.line, raw: task.raw, done: want };
+  if (want && vaultResultsSupported() && vtWantsResult(task)){
+    const r = await promptDialog("'"+task.text+"'\n\n결과를 한 줄로 남겨 두세요(비워도 됩니다). 점수·분포 같은 자세한 값은 해당 노트에 적습니다.",
+      { title:"결과 기록", placeholder:"예: 서류 탈락 / 55/80 / 합격", okLabel:"완료로 표시", value: task.result || "" });
+    if (r === null) return;
+    op.result = r;
+  }
+
   vaultBusy = true;
   li.style.opacity = ".5";                  /* 낙관적 표시 — 성공 여부는 응답으로 확정 */
   const res = await vaultRequest({
     action: "applyTasks",
     baseModifiedTime: vaultBase,
-    ops: [{ type:"toggle", id: task.id, line: task.line, raw: task.raw, done: want }]
+    ops: [op]
   });
   vaultBusy = false;
   li.style.opacity = "";

@@ -227,6 +227,20 @@ input[type=range]{accent-color:var(--accent);width:100%;margin:9px 0 0}
 .streak{font-family:var(--f-num);font-size:11px;color:var(--ink3)}
 .streak b{color:var(--signal);font-size:13px;font-weight:600}
 .grass{display:flex;gap:2px;margin-top:8px}
+/* 습관 기록(2026-10-31) — 그날 체크 + '한 것' 한 줄. 적은 내용은 기록 실적이라 파란 펜 */
+.hb-chk{flex:none;width:26px;height:26px;border-radius:var(--r);border:1.5px solid var(--rule);background:var(--paper);color:transparent;font-size:14px;font-weight:700;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.hb-chk:hover{border-color:var(--accent)}
+.hb-chk.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.hb-line{display:flex;align-items:center;gap:8px;margin-top:7px;padding-left:35px;flex-wrap:wrap}
+.hb-note{flex:1;min-width:0;color:var(--accent);font-weight:500}
+.hb-note::placeholder{color:var(--ink3);font-weight:400}
+.hb-auto{font-size:12px;color:var(--ink2)}
+.hb-sum{font-family:var(--f-num);font-size:12px;color:var(--accent);font-weight:500}
+.wo-panel{margin:8px 0 0 35px;padding:4px 14px 10px;border-left:2px solid var(--accent-soft)}
+.wo-panel details.help{margin-top:10px}
+.hb-cfg{gap:8px;margin-top:8px;flex-wrap:wrap}
+.hb-cfg input[type=time]{width:auto}
+@media (max-width:820px){ .hb-line{padding-left:0} .wo-panel{margin-left:0;padding-left:10px} .hb-chk{width:36px;height:36px} }
 .gd{flex:1;aspect-ratio:1;max-height:15px;background:var(--rule2);border-radius:1px;border:none;padding:0}
 .gd.on{background:var(--accent)}
 .gd.today{box-shadow:inset 0 0 0 1.5px var(--signal)}
@@ -556,9 +570,9 @@ header.top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end
 #cardReview{order:3;grid-column:span 5}
 #cardTime{order:4}
 #cardHabit{order:5}
-#cardSleep{order:6}
-#cardWorkout{order:7}
-#cardClosing{order:8}
+/* 습관 기록이 전체폭이 되면서(2026-10-31) 수면은 하루 닫기와 짝을 짓는다 */
+#cardSleep{order:6;grid-column:span 5}
+#cardClosing{order:7;grid-column:span 7}
 #cardJournal{order:9}
 #cardWeek{order:10}
 #cardGoals{order:11}
@@ -706,7 +720,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 }
 @media (max-width:900px){
   .grid{grid-template-columns:minmax(0,1fr)}
-  .card,.card.wide,#cardTodo,#cardReview{grid-column:1 / -1}
+  .card,.card.wide,#cardTodo,#cardReview,#cardSleep,#cardClosing{grid-column:1 / -1}
 }
 @media (max-width:820px){
   .wrap{padding:0 14px calc(96px + env(safe-area-inset-bottom))}
@@ -1185,14 +1199,56 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       </div>
     </section>
 
-    <!-- 습관 -->
-    <section data-tab="today" class="card" id="cardHabit">
-      <h2>습관 <span class="count" id="habitCount">0</span></h2>
-      <div class="row">
-        <input type="text" id="habitName" class="grow" placeholder="습관 이름 (예: 기상 7시)">
-        <button class="btn" id="habitAdd">추가</button>
+    <!-- 습관 기록 (2026-10-31~) — 습관 체크 + 그날 '한 것' 한 줄(S.habitNotes).
+         세트 입력을 붙인 습관은 행을 펼쳐 운동 세트를, 수면 연동 습관은 취침 기록으로 자동 체크.
+         습관·종목 이름은 사용자가 카드에서 정한다(공개 저장소라 코드에 두지 않는다) -->
+    <section data-tab="today" class="card wide" id="cardHabit">
+      <h2>습관 기록 <span class="count" id="habitCount">0</span>
+        <span class="spacer"></span>
+        <input type="date" id="woDate" aria-label="날짜">
+        <button class="ghost sm" id="woToday">오늘</button>
+      </h2>
+      <div id="habitList"></div>
+      <div id="woHold" hidden>
+        <div class="wo-panel" id="woPanel">
+          <div class="mini" id="woCountWrap">기록한 종목 <b id="woCount">0</b></div>
+          <div id="woList"></div>
+          <div class="row form-row wo-foot">
+            <label class="chk" title="이날은 세트마다 최대치를 잰 날"><input type="checkbox" id="woTest">기준 측정</label>
+            <input type="text" id="woNote" class="grow" placeholder="메모 (예: 루틴 A, 컨디션)" aria-label="운동 메모">
+          </div>
+          <details class="help" id="woManage">
+            <summary>종목 관리</summary>
+            <div class="row form-row wo-add">
+              <input type="text" id="woName" class="grow" placeholder="종목 이름" aria-label="종목 이름">
+              <select id="woUnit" aria-label="단위"><option value="회">회</option><option value="초">초</option></select>
+              <input type="number" id="woSets" min="1" max="10" placeholder="세트" aria-label="세트 수">
+              <input type="number" id="woTarget" min="1" max="999" placeholder="목표" aria-label="세트당 목표">
+              <button class="btn" id="woAdd">추가</button>
+            </div>
+            <ul class="list" id="woExList"></ul>
+            <p>세트는 <b>/</b>로 나눠 적습니다(예: <b>12/12/10</b>). 보조를 받은 세트는 앞에 <b>N</b>을 붙입니다(예: <b>N3</b> — 목표 채움으로 세지 않음). 목표를 비우면 '올릴 때' 신호를 보지 않습니다(최대−1처럼 매번 바뀌는 종목).</p>
+          </details>
+        </div>
       </div>
-      <div id="habitList" class="mt-4"></div>
+      <details class="help" id="hbManage">
+        <summary>습관 관리</summary>
+        <div class="row form-row mt-4">
+          <input type="text" id="habitName" class="grow" placeholder="습관 이름 (예: 기상 7시)" aria-label="새 습관 이름">
+          <button class="btn" id="habitAdd">추가</button>
+        </div>
+        <div class="row hb-cfg">
+          <span class="mini">세트 입력을 붙일 습관</span>
+          <select id="woHabit" aria-label="세트 입력을 붙일 습관"></select>
+        </div>
+        <div class="row hb-cfg">
+          <span class="mini">수면 기록으로 자동 체크할 습관</span>
+          <select id="hbSleepHabit" aria-label="수면 기록으로 자동 체크할 습관"></select>
+          <span class="mini">목표 취침</span>
+          <input type="time" id="hbBedTarget" aria-label="목표 취침 시각">
+        </div>
+        <p>체크 칸을 누르거나 '한 것'을 적으면 그날 습관이 체크됩니다. '한 것'은 비워 둬도 됩니다. 세트를 적으면 연결한 습관이 체크되고, 수면 연동 습관은 그날 밤 취침이 목표 시각 이전이면 수면을 저장할 때 체크됩니다. 지우거나 늦게 자도 체크는 풀지 않습니다(손으로 고칩니다).</p>
+      </details>
     </section>
 
     <!-- 수면 -->
@@ -1214,37 +1270,6 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
         저녁에 잠들었다면 그날 칸에, 자정을 넘겨 잠들었다면 다음날 칸에 취침 시각을 적으면 됩니다.
         어느 쪽이든 그날 기상 시각과 짝지어 계산합니다.
       </div>
-    </section>
-
-    <!-- 운동 기록 — 종목·목표는 사용자가 카드에서 정한다(공개 저장소라 코드에 두지 않는다).
-         날짜별 세트 횟수를 S.workout에 남기고, 지난번과 비교해 '올릴 때'를 알려 준다 -->
-    <section data-tab="today" class="card wide" id="cardWorkout">
-      <h2>운동 기록 <span class="count" id="woCount">0</span>
-        <span class="spacer"></span>
-        <input type="date" id="woDate" aria-label="날짜">
-        <button class="ghost sm" id="woToday">오늘</button>
-      </h2>
-      <div id="woList"></div>
-      <div class="row form-row wo-foot">
-        <label class="chk" title="이날은 세트마다 최대치를 잰 날"><input type="checkbox" id="woTest">기준 측정</label>
-        <input type="text" id="woNote" class="grow" placeholder="메모 (예: 루틴 A, 컨디션)" aria-label="메모">
-      </div>
-      <details class="help" id="woManage">
-        <summary>종목 관리</summary>
-        <div class="row form-row wo-add">
-          <input type="text" id="woName" class="grow" placeholder="종목 이름" aria-label="종목 이름">
-          <select id="woUnit" aria-label="단위"><option value="회">회</option><option value="초">초</option></select>
-          <input type="number" id="woSets" min="1" max="10" placeholder="세트" aria-label="세트 수">
-          <input type="number" id="woTarget" min="1" max="999" placeholder="목표" aria-label="세트당 목표">
-          <button class="btn" id="woAdd">추가</button>
-        </div>
-        <ul class="list" id="woExList"></ul>
-        <div class="row wo-habit">
-          <span class="mini">기록하면 체크할 습관</span>
-          <select id="woHabit" aria-label="기록하면 체크할 습관"></select>
-        </div>
-        <p>세트는 <b>/</b>로 나눠 적습니다(예: <b>12/12/10</b>). 보조를 받은 세트는 앞에 <b>N</b>을 붙입니다(예: <b>N3</b> — 목표 채움으로 세지 않음). 목표를 비우면 '올릴 때' 신호를 보지 않습니다(최대−1처럼 매번 바뀌는 종목).</p>
-      </details>
     </section>
 
     <!-- 기록 -->
@@ -2078,6 +2103,7 @@ document.getElementById("sleepList").addEventListener("change", e=>{
   updateSleepRow(row);
   const next = document.querySelector('.sleep-row[data-d="'+addDays(d,1)+'"]');
   if (next) updateSleepRow(next);
+  if (k === "bed" && hbSleepSync([addDays(d,-1), d])){ save(); renderHabits(); renderWorkout(); }
   renderSleepSummary(); renderWeek(); renderClosing(); renderCalendar();
 });
 document.getElementById("wakeNow").addEventListener("click", ()=>{
@@ -2088,7 +2114,10 @@ document.getElementById("wakeNow").addEventListener("click", ()=>{
 document.getElementById("bedNow").addEventListener("click", ()=>{
   const t = today();
   S.sleep[t] = Object.assign({}, S.sleep[t], { bed: hm(new Date()) });
-  save(); renderSleep(); renderCalendar(); toast("취침 "+S.sleep[t].bed+" 기록");
+  const ticked = hbSleepSync([addDays(t,-1), t], { quiet:true });
+  save(); renderSleep(); renderCalendar();
+  if (ticked){ renderHabits(); renderWorkout(); hbAfterChange(); }
+  toast("취침 "+S.sleep[t].bed+" 기록"+(ticked ? " — 습관도 체크했습니다" : ""));
 });
 
 /* ══════════════════════════════════════════════════════
@@ -4267,35 +4296,185 @@ document.getElementById("dayRefresh").addEventListener("click", ()=>{ fetchRouti
 /* '지금' 표시가 시간에 맞게 넘어가도록 1분마다 다시 그린다(보이는 동안만) */
 setInterval(()=>{ if (document.visibilityState === "visible") { try{ renderDay(); }catch(e){} } }, 60000);
 
-function renderHabits(){
-  document.getElementById("habitCount").textContent = S.habits.length;
-  const el = document.getElementById("habitList");
-  if(!S.habits.length){ el.innerHTML = '<div class="empty">기록할 습관을 추가해 보세요. 최근 30일이 한눈에 보입니다.</div>'; return; }
+/* ══ 습관 기록 (2026-10-31~) ════════════════════════════
+   S.habits = [{id,name,log}] — 형식은 그대로(목표 카드 성실성·습관 정원이 같은 형식을 읽는다).
+   S.habitNotes = { 날짜:{ 습관id:"한 것" } } — '한 것' 한 줄. 적으면 그날 체크된다.
+   S.habitCfg = { sleepHabitId, bedTarget:"HH:MM" } — 수면 기록으로 자동 체크할 습관.
+   세트 입력을 붙일 습관은 운동 기록의 S.workout.habitId를 그대로 쓴다.
+   날짜는 운동 기록과 같은 woDay(카드 머리의 날짜 칸)를 쓴다. */
+function hbNotes(){ S.habitNotes = S.habitNotes || {}; return S.habitNotes; }
+function hbCfg(){ S.habitCfg = S.habitCfg || {}; return S.habitCfg; }
+function hbNote(d, id){ const n = hbNotes()[d]; return (n && n[id]) || ""; }
+function hbSetNote(d, id, v){
+  const N = hbNotes();
+  if (v){ N[d] = N[d] || {}; N[d][id] = v; }
+  else if (N[d]){ delete N[d][id]; if (!Object.keys(N[d]).length) delete N[d]; }
+}
+let woOpen = false;
+try{ woOpen = localStorage.getItem("dd-wo-open") === "1"; }catch(e){}
+function hbKind(h){
+  if (h.id === woState().habitId) return "wo";
+  const c = hbCfg(); if (h.id === c.sleepHabitId) return "sleep";
+  return "note";
+}
+function hbDays(){ const t = today(), days = []; for (let i=29;i>=0;i--) days.push(addDays(t,-i)); return days; }
+function hbTopHtml(h, day){
+  const t = today(), days = hbDays();
+  const st = streaks(h), n30 = days.filter(d=>h.log[d]).length, on = !!h.log[day];
+  return '<button class="hb-chk'+(on?" on":"")+'" data-act="tick" aria-pressed="'+on+'" aria-label="'+esc(h.name)+' — '+shortDate(day)+' '+(on?"체크됨":"체크 안 됨")+'" title="'+(on?"체크 풀기":"체크")+'">✓</button>'+
+    '<span class="n">'+esc(h.name)+'</span>'+
+    '<span class="streak">30일 중 <b>'+n30+'</b>일'+(st.cur>1 ? ' · 연속 '+st.cur+'일' : '')+' · 최장 '+st.best+'일</span>'+
+    '<button class="icon-btn" data-act="delhabit" title="삭제" aria-label="'+esc(h.name)+' 삭제">×</button>';
+}
+function hbGrassHtml(h, day){
   const t = today();
-  const days = []; for(let i=29;i>=0;i--) days.push(addDays(t,-i));
-  el.innerHTML = S.habits.map(h=>{
-    /* 끊긴 연속보다 쌓인 날 수를 앞에 둔다 — 하루 빠졌다고 0으로 돌아가 보이지 않게 */
-    const st = streaks(h), n30 = days.filter(d=>h.log[d]).length;
-    return '<div class="habit" data-id="'+h.id+'">'+
-      '<div class="habit-top"><span class="n">'+esc(h.name)+'</span>'+
-        '<span class="streak">30일 중 <b>'+n30+'</b>일'+(st.cur>1 ? ' · 연속 '+st.cur+'일' : '')+' · 최장 '+st.best+'일</span>'+
-        '<button class="icon-btn" data-act="delhabit" title="삭제">×</button></div>'+
-      '<div class="grass">'+days.map(d=>
-        '<button class="gd'+(h.log[d]?" on":"")+(d===t?" today":"")+'" data-d="'+d+
-        '" title="'+d+'" aria-label="'+d+' 기록"></button>').join("")+'</div></div>';
+  return hbDays().map(d=>{
+    const note = hbNote(d, h.id);
+    return '<button class="gd'+(h.log[d]?" on":"")+(d===t?" today":"")+'" data-d="'+d+
+      '" title="'+d+(note ? " · "+esc(note) : "")+'" aria-label="'+d+(h.log[d]?" 체크됨":"")+(note ? ", "+esc(note) : "")+'"></button>';
   }).join("");
+}
+function woSummary(day){
+  const W = woState(), rec = W.log[day];
+  if (!rec || !rec.sets) return "";
+  return W.exercises.filter(ex=>(rec.sets[ex.id]||"").trim()).map(ex=>esc(ex.name)+" "+esc(rec.sets[ex.id])).join(" · ");
+}
+function hbLineHtml(h, day){
+  const k = hbKind(h);
+  if (k === "wo"){
+    const sum = woSummary(day);
+    return '<button class="ghost sm" data-act="wo" aria-expanded="'+woOpen+'">세트 입력 '+(woOpen?"▴":"▾")+'</button>'+
+      (sum ? '<span class="hb-sum">'+sum+'</span>' : '<span class="mini">아직 적은 세트 없음</span>');
+  }
+  if (k === "sleep"){
+    const bt = hbCfg().bedTarget;
+    return '<span class="hb-auto">'+(bt ? '수면 기록에서 자동 — 취침 '+esc(bt)+' 이전이면 체크' : '목표 취침 시각을 \'습관 관리\'에서 정하면 수면 기록으로 자동 체크합니다')+'</span>';
+  }
+  return '<input type="text" class="hb-note grow" value="'+esc(hbNote(day, h.id))+'" placeholder="무엇을 했나요 (선택)" aria-label="'+esc(h.name)+' — 한 것">';
+}
+/* 운동 패널은 한 벌의 고정 DOM이다(입력 이벤트가 붙어 있음). 목록을 다시 그리기 전에 보관소로
+   빼 두고, 그린 뒤 세트 입력을 붙인 습관 행 안으로 옮긴다 */
+function hbPlacePanel(){
+  const panel = document.getElementById("woPanel"), hold = document.getElementById("woHold");
+  if (!panel || !hold) return;
+  const W = woState();
+  const row = W.habitId && document.querySelector('#habitList .habit[data-id="'+W.habitId+'"]');
+  if (row && woOpen){ row.insertBefore(panel, row.querySelector(".grass")); }
+  else if (!row && W.exercises.length){
+    /* 연결된 습관이 없으면 기록이 사라져 보이지 않게 목록 아래에 그대로 둔다 */
+    document.getElementById("habitList").appendChild(panel);
+  } else hold.appendChild(panel);
+}
+function renderHabits(){
+  if (!woDay) woDay = today();
+  const day = woDay;
+  const dateEl = document.getElementById("woDate");
+  if (dateEl && dateEl.value !== day) dateEl.value = day;
+  const el = document.getElementById("habitList");
+  const panel = document.getElementById("woPanel");
+  if (panel) document.getElementById("woHold").appendChild(panel);
+  const nOn = S.habits.filter(h=>h.log[day]).length;
+  document.getElementById("habitCount").textContent = S.habits.length ? nOn+"/"+S.habits.length : "0";
+  if(!S.habits.length){
+    el.innerHTML = '<div class="empty">아래 \'습관 관리\'에서 기록할 습관을 추가해 보세요. 최근 30일이 한눈에 보입니다.</div>';
+    document.getElementById("hbManage").open = true;
+  } else {
+    el.innerHTML = S.habits.map(h=>
+      '<div class="habit" data-id="'+esc(h.id)+'">'+
+        '<div class="habit-top">'+hbTopHtml(h, day)+'</div>'+
+        '<div class="hb-line">'+hbLineHtml(h, day)+'</div>'+
+        '<div class="grass">'+hbGrassHtml(h, day)+'</div></div>').join("");
+  }
+  hbPlacePanel();
+  /* 습관 관리의 고르기 칸 */
+  const opts = sel => '<option value="">'+sel+'</option>' + S.habits.map(h=>'<option value="'+esc(h.id)+'">'+esc(h.name)+'</option>').join("");
+  const hs = document.getElementById("woHabit"), o1 = opts("붙이지 않음");
+  if (hs.innerHTML !== o1) hs.innerHTML = o1;
+  hs.value = S.habits.some(h=>h.id === woState().habitId) ? woState().habitId : "";
+  const ss = document.getElementById("hbSleepHabit"), o2 = opts("자동 체크 안 함");
+  if (ss.innerHTML !== o2) ss.innerHTML = o2;
+  const c = hbCfg();
+  ss.value = S.habits.some(h=>h.id === c.sleepHabitId) ? c.sleepHabitId : "";
+  const bt = document.getElementById("hbBedTarget");
+  if (document.activeElement !== bt) bt.value = c.bedTarget || "";
+}
+/* 한 습관 행의 체크·잔디만 다시 칠한다 — '한 것' 입력칸은 건드리지 않아 다른 칸의 포커스가 살아 있다 */
+function hbRefreshRow(h){
+  const row = document.querySelector('#habitList .habit[data-id="'+h.id+'"]'); if (!row) return;
+  const day = woDay || today();
+  row.querySelector(".habit-top").innerHTML = hbTopHtml(h, day);
+  row.querySelector(".grass").innerHTML = hbGrassHtml(h, day);
+  if (hbKind(h) === "wo"){
+    const sum = row.querySelector(".hb-sum, .hb-line > .mini"), s2 = woSummary(day);
+    if (sum) sum.outerHTML = s2 ? '<span class="hb-sum">'+s2+'</span>' : '<span class="mini">아직 적은 세트 없음</span>';
+  }
+  const nOn = S.habits.filter(x=>x.log[day]).length;
+  document.getElementById("habitCount").textContent = nOn+"/"+S.habits.length;
+}
+/* 습관이 바뀌면 습관을 읽는 다른 카드도 다시 그린다(습관 카드 자체는 행 단위로 고쳤으므로 빼고) */
+function hbAfterChange(){
+  [renderWeek, renderGoals, renderClosing, updateDashboardSummary].forEach(fn=>{
+    try{ fn(); }catch(err){ console.error("렌더 오류:", fn.name, err); }
+  });
 }
 document.getElementById("habitList").addEventListener("click", async e=>{
   const box = e.target.closest(".habit"); if(!box) return;
+  if (e.target.closest("#woPanel")) return;          /* 운동 패널 안의 클릭은 운동 쪽이 처리 */
   const h = S.habits.find(x=>x.id===box.dataset.id); if(!h) return;
   if (e.target.closest('[data-act="delhabit"]')){
     if (!(await confirmDialog("'"+h.name+"' 습관과 그동안의 기록을 모두 삭제할까요?"))) return;
-    S.habits = S.habits.filter(x=>x.id!==h.id); save(); renderAll(); return;
+    S.habits = S.habits.filter(x=>x.id!==h.id);
+    Object.keys(hbNotes()).forEach(d=>hbSetNote(d, h.id, ""));
+    save(); renderAll(); return;
   }
-  const cell = e.target.closest(".gd"); if(!cell) return;
-  const d = cell.dataset.d;
+  if (e.target.closest('[data-act="wo"]')){
+    woOpen = !woOpen;
+    try{ localStorage.setItem("dd-wo-open", woOpen ? "1" : "0"); }catch(err){}
+    renderHabits(); renderWorkout(); return;
+  }
+  let d = null;
+  if (e.target.closest('[data-act="tick"]')) d = woDay || today();
+  else { const cell = e.target.closest(".gd"); if (cell) d = cell.dataset.d; }
+  if (!d) return;
   if (h.log[d]) delete h.log[d]; else h.log[d] = true;
-  save(); renderAll();
+  save(); hbRefreshRow(h); hbAfterChange();
+});
+document.getElementById("habitList").addEventListener("change", e=>{
+  const inp = e.target.closest(".hb-note"); if (!inp) return;
+  const h = S.habits.find(x=>x.id === inp.closest(".habit").dataset.id); if (!h) return;
+  const d = woDay || today(), v = inp.value.replace(/\s+/g, " ").trim();
+  hbSetNote(d, h.id, v);
+  if (v && !h.log[d]) h.log[d] = true;               /* 적으면 체크. 지워도 체크는 풀지 않는다 */
+  save(); hbRefreshRow(h); hbAfterChange();
+});
+document.getElementById("habitList").addEventListener("keydown", e=>{
+  if (e.key === "Enter" && e.target.closest(".hb-note")) e.target.blur();
+});
+
+/* 수면 연동 — 날짜 X의 습관 = X일 밤의 취침. 그 밤은 X칸의 저녁 시각이나 X+1칸의 새벽 시각에
+   적혀 있으므로 수면 카드와 같은 bedStartFor(X+1)로 찾는다. 목표 이전이면 체크만 켠다 */
+function hbSleepSync(dates, opts){
+  const c = hbCfg(); if (!c.sleepHabitId || !/^\d\d:\d\d$/.test(c.bedTarget||"")) return 0;
+  const h = S.habits.find(x=>x.id === c.sleepHabitId); if (!h) return 0;
+  let n = 0;
+  dates.forEach(X=>{
+    if (X > today()) return;
+    const start = bedStartFor(addDays(X, 1)); if (!start) return;
+    const tgtDay = c.bedTarget >= "12:00" ? X : addDays(X, 1);
+    if (start <= new Date(tgtDay+"T"+c.bedTarget+":00") && !h.log[X]){ h.log[X] = true; n++; }
+  });
+  if (n && !(opts && opts.quiet)) toast("수면 기록으로 '"+h.name+"'을 체크했습니다.");
+  return n;
+}
+function hbSleepBackfill(){
+  const n = hbSleepSync(hbDays(), { quiet:true });
+  if (n) toast("최근 30일 수면 기록으로 "+n+"일을 체크했습니다.");
+}
+document.getElementById("hbSleepHabit").addEventListener("change", e=>{
+  hbCfg().sleepHabitId = e.target.value; hbSleepBackfill(); save(); renderHabits(); hbAfterChange();
+});
+document.getElementById("hbBedTarget").addEventListener("change", e=>{
+  hbCfg().bedTarget = e.target.value || ""; hbSleepBackfill(); save(); renderHabits(); hbAfterChange();
 });
 
 /* ══ 운동 기록 ═════════════════════════════════════════
@@ -4334,11 +4513,9 @@ function woHistory(ex, beforeDate){
 }
 function woSum(str){ return woParse(str).sets.reduce((a,x)=>a + x.n, 0); }
 function renderWorkout(){
-  const card = document.getElementById("cardWorkout"); if (!card) return;
+  const panel = document.getElementById("woPanel"); if (!panel) return;
   const W = woState();
   if (!woDay) woDay = today();
-  const dateEl = document.getElementById("woDate");
-  if (dateEl.value !== woDay) dateEl.value = woDay;
   const day = W.log[woDay] || {};
   const listEl = document.getElementById("woList");
   if (!W.exercises.length){
@@ -4382,10 +4559,6 @@ function renderWorkout(){
     (i ? '<button class="icon-btn" data-act="woup" title="위로" aria-label="위로">↑</button>' : '')+
     '<button class="icon-btn" data-act="woedit" title="목표 고치기" aria-label="목표 고치기">✎</button>'+
     '<button class="icon-btn" data-act="wodel" title="삭제" aria-label="삭제">×</button></li>').join("");
-  const hs = document.getElementById("woHabit");
-  const opts = '<option value="">체크하지 않음</option>' + S.habits.map(h=>'<option value="'+esc(h.id)+'">'+esc(h.name)+'</option>').join("");
-  if (hs.innerHTML !== opts) hs.innerHTML = opts;
-  hs.value = S.habits.some(h=>h.id === W.habitId) ? W.habitId : "";
 }
 function woDayRec(){
   const W = woState();
@@ -4403,13 +4576,18 @@ function woTickHabit(){
   const h = S.habits.find(x=>x.id === W.habitId); if (!h) return;
   if (!h.log[woDay]){ h.log[woDay] = true; toast("습관 '"+h.name+"'도 체크했습니다."); }
 }
+/* 운동 기록이 바뀌면 붙어 있는 습관 행(체크·요약)만 고친다 */
+function woSyncHabitRow(){
+  const W = woState(), h = W.habitId && S.habits.find(x=>x.id === W.habitId);
+  if (h){ hbRefreshRow(h); hbAfterChange(); }
+}
 document.getElementById("woList").addEventListener("change", e=>{
   const inp = e.target.closest(".wo-in"); if (!inp) return;
   const id = inp.closest(".wo-row").dataset.ex, v = inp.value.replace(/\s*\/\s*/g, "/").trim();
   const r = woDayRec();
   if (v) r.sets[id] = v; else delete r.sets[id];
   if (v) woTickHabit();
-  woCleanDay(); save(); renderWorkout(); renderHabits();
+  woCleanDay(); save(); renderWorkout(); woSyncHabitRow();
 });
 document.getElementById("woList").addEventListener("keydown", e=>{
   if (e.key !== "Enter" || !e.target.closest(".wo-in")) return;
@@ -4421,8 +4599,8 @@ document.getElementById("woTest").addEventListener("change", e=>{
 document.getElementById("woNote").addEventListener("change", e=>{
   const r = woDayRec(); r.note = e.target.value.trim(); woCleanDay(); save(); renderWorkout();
 });
-document.getElementById("woDate").addEventListener("change", e=>{ if (e.target.value){ woDay = e.target.value; renderWorkout(); } });
-document.getElementById("woToday").addEventListener("click", ()=>{ woDay = today(); renderWorkout(); });
+document.getElementById("woDate").addEventListener("change", e=>{ if (e.target.value){ woDay = e.target.value; renderHabits(); renderWorkout(); } });
+document.getElementById("woToday").addEventListener("click", ()=>{ woDay = today(); renderHabits(); renderWorkout(); });
 document.getElementById("woAdd").addEventListener("click", ()=>{
   const name = document.getElementById("woName").value.trim();
   if (!name){ document.getElementById("woName").focus(); return; }
@@ -4459,7 +4637,7 @@ document.getElementById("woExList").addEventListener("click", async e=>{
   }
   save(); renderWorkout();
 });
-document.getElementById("woHabit").addEventListener("change", e=>{ woState().habitId = e.target.value; save(); });
+document.getElementById("woHabit").addEventListener("change", e=>{ woState().habitId = e.target.value; save(); renderHabits(); renderWorkout(); });
 
 /* ══ 목표 카드 접기 ═══ 접으면 요약 타일만. 상태는 이 기기에만 기억한다 */
 function goalsFoldApply(){

@@ -586,6 +586,9 @@ header.top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end
 .ghost:hover{border-color:var(--ink3);color:var(--ink);background:transparent}
 input[type=text],input[type=date],input[type=time],input[type=number],input[type=url],select,textarea{border-radius:var(--r);border-color:var(--rule);background:var(--paper);padding:9px 11px;transition:border-color var(--motion-fast),box-shadow var(--motion-fast)}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);outline:none}
+/* 앱에서 테마를 고르면 기본 입력칸(달력·시계 아이콘, 체크박스)도 그 테마로 — meta color-scheme은 시스템을 따른다 */
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark}
 [data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea{background:var(--input-dark);border-color:var(--input-dark-border);color:var(--ink);color-scheme:dark}
 [data-theme="dark"] input::placeholder,[data-theme="dark"] textarea::placeholder{color:var(--input-dark-placeholder)}
 @media (prefers-color-scheme: dark){
@@ -721,7 +724,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 @media (max-width:1100px) and (min-width:821px){
   .wrap{padding-left:20px;padding-right:20px}.card{padding-left:18px;padding-right:18px}
 }
-@media (max-width:900px){
+@media (max-width:820px){
   .grid{grid-template-columns:minmax(0,1fr)}
   .card,.card.wide,#cardTodo,#cardReview,#cardSleep,#cardClosing{grid-column:1 / -1}
 }
@@ -737,14 +740,16 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
   .stats{row-gap:14px}
   .close-stamp{width:62px;height:62px;font-size:12px;top:10px;right:12px}
   /* 돌아보기·일정 탭에서는 머리말을 한 줄로 — 10분 칸은 오늘·공부 탭에서 본다 */
+  body[data-mtab="study"] .ledger-grid,body[data-mtab="study"] .ledger-key,body[data-mtab="study"] .today-summary,
+  body[data-mtab="study"] .ledger-note,body[data-mtab="study"] .ledger-go,
   body[data-mtab="plan"] .ledger-grid,body[data-mtab="plan"] .ledger-key,body[data-mtab="plan"] .today-summary,
   body[data-mtab="plan"] .ledger-note,body[data-mtab="plan"] .ledger-go,
   body[data-mtab="look"] .ledger-grid,body[data-mtab="look"] .ledger-key,body[data-mtab="look"] .today-summary,
   body[data-mtab="look"] .ledger-note,body[data-mtab="look"] .ledger-go,
   body[data-mtab="look"] .dday-strip{display:none}
-  body[data-mtab="plan"] .ledger,body[data-mtab="look"] .ledger{padding:10px 14px}
-  body[data-mtab="plan"] .ledger-head,body[data-mtab="look"] .ledger-head{margin:0}
-  body[data-mtab="plan"] .ledger-total b,body[data-mtab="look"] .ledger-total b{font-size:22px}
+  body[data-mtab="study"] .ledger,body[data-mtab="plan"] .ledger,body[data-mtab="look"] .ledger{padding:10px 14px}
+  body[data-mtab="study"] .ledger-head,body[data-mtab="plan"] .ledger-head,body[data-mtab="look"] .ledger-head{margin:0}
+  body[data-mtab="study"] .ledger-total b,body[data-mtab="plan"] .ledger-total b,body[data-mtab="look"] .ledger-total b{font-size:22px}
   body[data-mtab="plan"] header.top,body[data-mtab="look"] header.top{padding-top:14px;padding-bottom:12px}
   body[data-mtab="plan"] .today-date,body[data-mtab="look"] .today-date{font-size:28px}
   #cardClosing.is-closed>h2{padding-right:70px}
@@ -766,7 +771,7 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
   .cal-grid,.cal-dow{gap:2px}.cell{min-height:50px;padding:5px 3px;border-radius:7px}.cell .dnum{font-size:11px}
   .mk{width:9px;height:9px;min-width:9px;min-height:9px;font-size:8px}
 }
-@media (max-width:900px) and (orientation:landscape){
+@media (max-width:820px) and (orientation:landscape){
   .mnav button{min-height:44px}.mnav button span{display:none}
   .wrap{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
   header.top{padding-top:14px;padding-bottom:14px}.today-date{font-size:28px}
@@ -899,6 +904,81 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
   /* 공부 탭에서 시간 추적(order 4)이 복습보다 먼저 보이게 — 데스크톱은 할 일｜복습 짝(order 2·3)이 시간 추적 위 */
   #cardReview{order:5}
 }
+
+/* ══ 2026-10-31 화면 검토 반영 ═══════════════════════════════════════════
+   모바일: 할 일 옵션 접기, D-day 한 줄, 과목 칸 하나, 지난 수면은 읽기 줄, 큰 체크
+   데스크톱: 배치 세 가지(모두 펼침 · 2단 · 탭) — 머리말 스위치로 고른다(기기별 저장) */
+.todo-opt-btn{display:none}
+.todo-opt-btn.has-val::after{content:"";display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:var(--accent);vertical-align:2px}
+.sl-view{display:none}
+.week-empty{flex:1;align-self:center;padding:0 12px}
+.dl-switch button{padding:4px 11px;font-size:11.5px}
+.dnav{display:none}
+
+@media (max-width:820px){
+  .dl-switch{display:none}
+  /* 할 일: 입력 | 추가 | 옵션 한 줄, 우선순위·주제·날짜·시간은 '옵션'에서 */
+  #cardTodo .form-row{flex-direction:row;align-items:center;gap:6px}
+  #cardTodo .form-row>input{flex:1;width:auto!important}
+  #cardTodo .form-row>button{width:auto!important;flex:none}
+  .todo-opt-btn{display:inline-flex;align-items:center}
+  #cardTodo:not(.opts-open) #todoOpts{display:none}
+  /* D-day는 한 줄로 두고 옆으로 넘긴다 */
+  .dday-strip{flex-wrap:nowrap;overflow-x:auto;min-width:0;scrollbar-width:none;margin-right:-14px;padding-right:14px}
+  .dday-strip::-webkit-scrollbar{display:none}
+  .dday-strip .dday{flex:none;white-space:nowrap}
+  /* 시간 추적: 과목은 드롭다운 하나 — '직접 입력…'을 고르면 입력칸이 나온다 */
+  #cardTime[data-subj="pick"] #trSubject{display:none}
+  #cardTime[data-subj="type"] #trSubjPick{display:none}
+  /* 수면: 오늘 줄만 바로 고치고, 지난 날은 눌러서 고친다 */
+  .sleep-row:not(.now):not(.open) .time-sel{display:none}
+  .sleep-row:not(.now):not(.open) .sl-view{display:block;grid-column:2 / 4}
+  .sl-view{background:none;border:1px dashed var(--rule);border-radius:var(--r);min-height:40px;padding:6px 10px;
+    text-align:left;font-family:var(--f-num);font-size:13px;color:var(--ink2);font-variant-numeric:tabular-nums}
+  /* 손가락 크기 */
+  .check{width:28px;height:28px}
+  .check.on::after{left:9px;top:4px;width:7px;height:13px}
+  label.chk input{width:22px;height:22px}
+}
+
+/* ── 데스크톱 · 탭 ── */
+@media (min-width:821px){
+  body[data-dlayout="tabs"][data-mtab="today"] .grid>section:not([data-tab="today"]),
+  body[data-dlayout="tabs"][data-mtab="study"] .grid>section:not([data-tab="study"]),
+  body[data-dlayout="tabs"][data-mtab="plan"]  .grid>section:not([data-tab="plan"]),
+  body[data-dlayout="tabs"][data-mtab="look"]  .grid>section:not([data-tab="look"]){display:none}
+  body[data-dlayout="tabs"] .dnav{display:flex;gap:6px;position:sticky;top:0;z-index:30;margin:0 0 18px;padding:10px 0;
+    background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--rule)}
+  .dnav button{display:flex;align-items:baseline;gap:8px;background:none;border:1px solid transparent;border-radius:var(--r);
+    padding:8px 16px;color:var(--ink2)}
+  .dnav button b{font-size:15px;font-weight:600}
+  .dnav button span{font-size:12px;color:var(--ink3)}
+  .dnav button:hover{border-color:var(--rule);color:var(--ink)}
+  .dnav button.on{background:var(--card);border-color:var(--rule);color:var(--accent);box-shadow:var(--shadow)}
+  .dnav button.on .nav-badge{background:var(--accent);color:var(--on-accent)}
+  /* 한 탭 안에서 빈 칸이 생기지 않게 짝을 다시 짓는다 — 오늘: 할 일｜수면, 그 아래 전체폭 */
+  body[data-dlayout="tabs"] #cardSleep{order:3}
+  body[data-dlayout="tabs"] #cardClosing,
+  body[data-dlayout="tabs"] #cardReview{grid-column:1 / -1}
+  body[data-dlayout="tabs"] #cardReview{order:5}
+}
+
+/* ── 데스크톱 · 2단 — 왼쪽은 오늘 쓰는 것, 오른쪽은 곁눈으로 보는 것 ── */
+@media (min-width:1101px){
+  body[data-dlayout="split"] .wrap{max-width:1280px}
+  body[data-dlayout="split"] .grid{display:block}
+  .dcols{display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:20px;align-items:start}
+  .dcol{display:flex;flex-direction:column;gap:20px;min-width:0}
+  .dcol>section{order:0!important}   /* #cardTodo{order:2} 같은 ID 규칙보다 앞서야 DOM 순서대로 쌓인다 */
+  .dcol-side .cal-nav .m{font-size:16px;min-width:0}
+  .dcol-side .cell{min-height:44px;padding:4px}
+  .dcol-side .legend{gap:6px 12px}
+  .dcol-side .stats{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:14px}
+  .dcol-side .stat:nth-child(3){border-left:none;padding-left:0}
+  .dcol-side .stat .v{font-size:22px}
+  .dcol-side .week{gap:6px}
+}
 </style>
 
 </head>
@@ -911,6 +991,11 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       <h1 class="today-date" id="todayDate">—</h1>
     </div>
     <div class="top-actions">
+      <div class="seg dl-switch" id="dlSwitch" role="group" aria-label="데스크톱 배치">
+        <button type="button" data-lay="stack" aria-pressed="true" class="on">모두 펼침</button>
+        <button type="button" data-lay="split" aria-pressed="false">2단</button>
+        <button type="button" data-lay="tabs" aria-pressed="false">탭</button>
+      </div>
       <button class="ghost sm" id="btnTheme">밝기 전환</button>
       <button class="ghost sm" id="btnSettings">설정</button>
     </div>
@@ -933,6 +1018,14 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
       </div>
     </section>
   </header>
+
+  <!-- 데스크톱 '탭' 배치에서만 보인다 — 모바일 하단 탭과 같은 네 묶음(body[data-mtab]) -->
+  <nav class="dnav" id="dnav" aria-label="화면 전환">
+    <button type="button" data-go="today"><b>오늘</b><span>계획·할 일</span><i class="nav-badge" data-badge="navToday">0</i></button>
+    <button type="button" data-go="study"><b>공부</b><span>시간·복습</span><i class="nav-badge" data-badge="navStudy">0</i></button>
+    <button type="button" data-go="plan"><b>일정</b><span>달력</span><i class="nav-badge" data-badge="navPlan">0</i></button>
+    <button type="button" data-go="look"><b>돌아보기</b><span>주간·기록</span><i class="nav-badge" data-badge="navLook">0</i></button>
+  </nav>
 
   <div class="grid">
 
@@ -1064,8 +1157,9 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
         <input type="text" id="todoText" class="grow" placeholder="할 일을 입력하고 Enter">
         <button class="btn" id="todoAdd">추가</button>
         <button type="button" class="ghost" id="todoCancelEdit" style="display:none">취소</button>
+        <button type="button" class="ghost todo-opt-btn" id="todoOptBtn" aria-expanded="false" aria-controls="todoOpts">옵션</button>
       </div>
-      <div class="row mt-6">
+      <div class="row mt-6 todo-opts" id="todoOpts">
         <select id="todoPri">
           <option value="normal">보통</option>
           <option value="high">높음</option>
@@ -2079,7 +2173,14 @@ function updateSleepRow(row){
   const cell = row.querySelector(".dur");
   cell.className = "dur " + (m ? (m<goal ? "short" : "") : "none");
   cell.textContent = m ? fmtClock(m) : "—";
+  row.querySelector(".sl-view").textContent = sleepViewText(row.dataset.d);
 }
+document.getElementById("sleepList").addEventListener("click", e=>{
+  const b = e.target.closest(".sl-view"); if (!b) return;
+  const row = b.closest(".sleep-row");
+  sleepOpen.add(row.dataset.d); row.classList.add("open");
+  const first = row.querySelector("select"); if (first) first.focus();
+});
 function renderSleepSummary(){
   const goal = (S.settings.sleepGoal||7)*60;
   const vals = sleepDays().map(sleepMinutes).filter(x=>x);
@@ -2089,6 +2190,12 @@ function renderSleepSummary(){
   document.getElementById("sleepNote").textContent =
     avg ? (avg >= goal ? "목표 달성" : "목표보다 "+fmtClock(goal-avg)+" 부족") : "";
 }
+/* 모바일에서 지난 날 수면은 '23:40 → 07:10' 한 줄로 보이고, 누르면 고칠 수 있게 펼친다 */
+const sleepOpen = new Set();
+function sleepViewText(d){
+  const rec = S.sleep[d] || {};
+  return (rec.bed || rec.wake) ? (rec.bed || "--:--") + " → " + (rec.wake || "--:--") : "기록 없음 · 눌러서 적기";
+}
 function renderSleep(){
   const t = today(), goal = (S.settings.sleepGoal||7)*60;
   document.getElementById("sleepList").innerHTML = sleepDays().map(d=>{
@@ -2096,8 +2203,9 @@ function renderSleep(){
     const m = sleepMinutes(d);
     const dow = DOW[new Date(d+"T00:00:00").getDay()];
     const cls = m ? (m<goal ? "short" : "") : "none";
-    return '<div class="sleep-row'+(d===t?" now":"")+'" data-d="'+d+'">'+
+    return '<div class="sleep-row'+(d===t?" now":"")+(sleepOpen.has(d)?" open":"")+'" data-d="'+d+'">'+
       '<span class="d">'+shortDate(d)+' '+dow+'</span>'+
+      '<button type="button" class="sl-view" aria-label="'+shortDate(d)+' 수면 기록 고치기">'+sleepViewText(d)+'</button>'+
       timeSelectHtml("bed", rec.bed)+
       timeSelectHtml("wake", rec.wake)+
       '<span class="dur '+cls+'">'+(m?fmtClock(m):"—")+'</span></div>';
@@ -3160,6 +3268,7 @@ function resetTodoForm(){
   tEl.value = ""; tEl.disabled = false;
   document.getElementById("todoAdd").textContent = "추가";
   document.getElementById("todoCancelEdit").style.display = "none";
+  setTodoOpts(false); markTodoOpts();
   renderVaultTasks();
 }
 function startVaultEdit(li){
@@ -3183,6 +3292,7 @@ function startVaultEdit(li){
   tEl.value = ""; tEl.disabled = true;            /* 시간은 캘린더 일정의 것 */
   document.getElementById("todoAdd").textContent = "저장";
   document.getElementById("todoCancelEdit").style.display = "";
+  setTodoOpts(true); markTodoOpts();
   renderVaultTasks();
   const input = document.getElementById("todoText");
   input.scrollIntoView({ block:"center", behavior:"smooth" });
@@ -3228,6 +3338,21 @@ async function saveVaultEdit(){
   }
 }
 document.getElementById("todoCancelEdit").addEventListener("click", resetTodoForm);
+/* 모바일에서 접어 두는 옵션 줄 — 기본값과 다른 옵션이 있으면 버튼에 점을 찍는다 */
+function setTodoOpts(open){
+  document.getElementById("cardTodo").classList.toggle("opts-open", open);
+  document.getElementById("todoOptBtn").setAttribute("aria-expanded", open);
+}
+function markTodoOpts(){
+  const v = id => document.getElementById(id).value;
+  const set = v("todoPri") !== "normal" || !!v("todoSub") || !!v("todoTime") || document.getElementById("todoDeadline").checked ||
+    (v("todoTag") && v("todoTag") !== VAULT_DEFAULT_SECTION);
+  document.getElementById("todoOptBtn").classList.toggle("has-val", set);
+}
+document.getElementById("todoOptBtn").addEventListener("click", ()=>{
+  setTodoOpts(!document.getElementById("cardTodo").classList.contains("opts-open"));
+});
+document.getElementById("todoOpts").addEventListener("change", markTodoOpts);
 
 /* ══ 할 일 ══════════════════════════════════════════════ */
 function visibleTodos(){
@@ -3264,9 +3389,9 @@ function renderTodos(){
   const key = td => (td.due||"9999-99-99")+"T"+(td.time||"99:99");
   const active = all.filter(td=>!td.done).sort((a,b)=>
     key(a).localeCompare(key(b)) ||
-    (pri[a.priority]-pri[b.priority]) || b.createdAt.localeCompare(a.createdAt));
+    (pri[a.priority]-pri[b.priority]) || (b.createdAt||"").localeCompare(a.createdAt||""));
   const done = all.filter(td=>td.done).sort((a,b)=>
-    (b.doneAt||"").localeCompare(a.doneAt||"") || b.createdAt.localeCompare(a.createdAt));
+    (b.doneAt||"").localeCompare(a.doneAt||"") || (b.createdAt||"").localeCompare(a.createdAt||""));
 
   const vOpen = vaultTasks.filter(x=>vtActive(x) && vtInScope(x)).length;
   document.getElementById("todoCount").textContent = String(vOpen + active.length);
@@ -3683,6 +3808,7 @@ async function trMarkDone(btn){
 }
 
 /* 고르기 목록·후보 — Tasks.md 미완료 항목을 과목별로 묶는다(가까운 기한 순) */
+let trSubjTyped = false;
 function renderTrPick(){
   const sel = document.getElementById("trPick"); if (!sel) return;
   sel.hidden = !vaultWritable();   /* 브리지가 없으면 직접 입력만 */
@@ -3707,8 +3833,13 @@ function renderTrPick(){
   const sp = document.getElementById("trSubjPick");
   const heads = trHeadSubjects();
   setHtmlIfChanged(sp, '<option value="">'+(heads.length ? "과목 고르기" : "Tasks.md 과목 없음")+'</option>'+
-    heads.map(g=>'<optgroup label="'+esc(g.label)+'">'+g.names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join("")+'</optgroup>').join(""));
-  sp.value = (subj && heads.some(g=>g.names.indexOf(subj) > -1)) ? subj : "";
+    heads.map(g=>'<optgroup label="'+esc(g.label)+'">'+g.names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join("")+'</optgroup>').join("")+
+    (heads.length ? '<option value="__type">직접 입력…</option>' : ""));
+  const inHeads = !!subj && heads.some(g=>g.names.indexOf(subj) > -1);
+  if (subj && !inHeads) trSubjTyped = true;
+  sp.value = inHeads ? subj : (trSubjTyped && heads.length ? "__type" : "");
+  /* 모바일은 과목 칸을 하나만 보인다 — 고를 과목이 없으면 입력칸, 직접 입력을 골랐으면 둘 다 */
+  document.getElementById("cardTime").dataset.subj = !heads.length ? "type" : (trSubjTyped ? "both" : "pick");
   document.getElementById("trTaskList").innerHTML = trOpenTasks()
     .filter(x=>!subj || trTaskSubject(x) === subj)
     .map(x=>'<option value="'+esc(trTaskText(x))+'"></option>').join("");
@@ -3749,6 +3880,12 @@ document.getElementById("trPick").addEventListener("change", e=>{
 document.getElementById("trSubject").addEventListener("input", renderTrPick);
 document.getElementById("trSubjPick").addEventListener("change", e=>{
   const v = e.target.value; if (!v) return;
+  if (v === "__type"){
+    trSubjTyped = true; renderTrPick();
+    document.getElementById("trSubject").focus();
+    return;
+  }
+  trSubjTyped = false;
   document.getElementById("trSubject").value = v;
   /* 다른 과목의 할 일을 골라 둔 상태면 그 연결과 할 일 칸을 비운다 */
   if (trPicked && trPicked.subject !== v){
@@ -4767,7 +4904,10 @@ function renderWeek(){
   const past = days.filter(d=>d<=t);
   const mins = days.map(d=>S.sessions.filter(s=>s.date===d).reduce((a,s)=>a+s.minutes,0));
   const max = Math.max(60, ...mins);
-  document.getElementById("weekChart").innerHTML = days.map((d,i)=>{
+  const weekTotal = mins.reduce((a,b)=>a+b,0);
+  document.getElementById("weekChart").innerHTML = !weekTotal
+    ? '<div class="empty week-empty">이번 주 공부 기록이 쌓이면 요일별 공부 시간이 여기에 막대로 그려집니다.<br>시간 추적에서 기록을 시작해 보세요.</div>'
+    : days.map((d,i)=>{
     const h = Math.round((mins[i]/max)*66);
     const dow = DOW[new Date(d+"T00:00:00").getDay()];
     const future = d>t;
@@ -5354,7 +5494,10 @@ function showTab(t, restoreScroll=true){
   const previous = document.body.dataset.mtab;
   if (previous && MOBILE.matches) tabScrollPositions[previous] = window.scrollY;
   document.body.dataset.mtab = t;
-  document.querySelectorAll("#mnav button").forEach(b=>b.classList.toggle("on", b.dataset.go===t));
+  document.querySelectorAll("#mnav button,#dnav button").forEach(b=>{
+    const on = b.dataset.go===t; b.classList.toggle("on", on);
+    if (b.closest("#dnav")) b.setAttribute("aria-current", on ? "page" : "false");
+  });
   try{ localStorage.setItem("dd-mtab", t); }catch(e){}
   if (MOBILE.matches && restoreScroll){
     requestAnimationFrame(()=>window.scrollTo({top:tabScrollPositions[t]||0, behavior:"auto"}));
@@ -5363,8 +5506,58 @@ function showTab(t, restoreScroll=true){
 /* 다른 탭에 있는 카드로 이동해야 할 때 먼저 그 탭을 연다 */
 function revealCard(el){
   const sec = el && el.closest("section[data-tab]");
-  if (sec && MOBILE.matches && document.body.dataset.mtab !== sec.dataset.tab) showTab(sec.dataset.tab);
+  if (sec && (MOBILE.matches || deskTabs()) && document.body.dataset.mtab !== sec.dataset.tab) showTab(sec.dataset.tab);
 }
+
+/* ══ 데스크톱 배치 — 모두 펼침 / 2단 / 탭 ══════════════════════
+   2단은 카드를 두 세로 줄(.dcol)로 옮긴다. 줄마다 높이가 따로라 CSS 그리드로는 빈칸이 생긴다.
+   모바일·태블릿(1100px 이하)으로 좁아지면 원래 DOM 순서로 되돌린다 — 모바일 탭 CSS가 .grid>section을 기대한다 */
+const DESK_SPLIT = window.matchMedia("(min-width:1101px)");
+const GRID = document.querySelector(".grid");
+const GRID_CARDS = [...GRID.children];
+const SPLIT_MAIN = ["cardDay","cardTodo","cardTime","cardHabit","cardClosing","cardJournal","cardGoals"];
+const SPLIT_SIDE = ["cardCalendar","cardReview","cardSleep","cardWeek","cardGcal"];
+function deskLayout(){
+  let v = "stack";
+  try{ v = localStorage.getItem("dd-dlayout") || "stack"; }catch(e){}
+  return ["stack","split","tabs"].includes(v) ? v : "stack";
+}
+function deskTabs(){ return !MOBILE.matches && deskLayout() === "tabs"; }
+function applyDeskLayout(){
+  const lay = deskLayout();
+  document.body.dataset.dlayout = lay;
+  document.querySelectorAll("#dlSwitch button").forEach(b=>{
+    const on = b.dataset.lay === lay; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on);
+  });
+  const split = lay === "split" && DESK_SPLIT.matches;
+  const cols = GRID.querySelector(".dcols");
+  if (split && !cols){
+    const wrap = document.createElement("div"); wrap.className = "dcols";
+    const main = document.createElement("div"); main.className = "dcol dcol-main";
+    const side = document.createElement("div"); side.className = "dcol dcol-side";
+    SPLIT_MAIN.forEach(id=>{ const el = document.getElementById(id); if (el) main.appendChild(el); });
+    SPLIT_SIDE.forEach(id=>{ const el = document.getElementById(id); if (el) side.appendChild(el); });
+    GRID_CARDS.forEach(el=>{ if (el.parentNode === GRID) main.appendChild(el); });   /* 목록에 없는 새 카드는 왼쪽 끝 */
+    wrap.append(main, side); GRID.appendChild(wrap);
+  } else if (!split && cols){
+    GRID_CARDS.forEach(el=>GRID.appendChild(el));
+    cols.remove();
+  }
+}
+document.getElementById("dlSwitch").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-lay]"); if (!b) return;
+  try{ localStorage.setItem("dd-dlayout", b.dataset.lay); }catch(err){}
+  applyDeskLayout();
+  renderGoals();   /* 그래프 폭이 카드 폭을 따른다 */
+});
+document.getElementById("dnav").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-go]"); if (!b) return;
+  showTab(b.dataset.go, false);
+  const nav = document.getElementById("dnav");
+  if (nav.getBoundingClientRect().top <= 0) window.scrollTo({ top: nav.offsetTop, behavior: "auto" });
+});
+DESK_SPLIT.addEventListener("change", applyDeskLayout);
+applyDeskLayout();
 document.getElementById("mnav").addEventListener("click", e=>{
   const b = e.target.closest("button[data-go]"); if(!b) return;
   showTab(b.dataset.go, true);
@@ -5424,7 +5617,11 @@ function updateDashboardSummary(){
   const values={sumClosing:close,sumTodos:String(activeTodos),sumStudy:fmtClock(studyMin),sumReview:String(dueReviews)};
   Object.entries(values).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=v;});
   const badges={navToday:activeTodos+dueReviews,navStudy:reviewPlans,navPlan:nearDeadlines,navLook:(S.habits||[]).filter(h=>!h.log||!h.log[t]).length};
-  Object.entries(badges).forEach(([id,n])=>{const el=document.getElementById(id);if(!el)return;el.textContent=String(n);el.dataset.empty=n?"false":"true";});
+  Object.entries(badges).forEach(([id,n])=>{
+    [document.getElementById(id), ...document.querySelectorAll('[data-badge="'+id+'"]')].forEach(el=>{
+      if(!el) return; el.textContent=String(n); el.dataset.empty=n?"false":"true";
+    });
+  });
 }
 
 /* ══ 전체 렌더 ══════════════════════════════════════════ */

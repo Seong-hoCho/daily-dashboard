@@ -350,6 +350,8 @@ li.vt .dday,.db-tasks li .dday{white-space:nowrap;width:auto;min-width:48px;just
 .db-tag.now{background:var(--ink);color:var(--card);border-color:var(--ink)}
 .db-tag.ok{color:var(--m-todo);border-color:var(--m-todo)}
 .db-tag.alt{color:var(--warn);border-color:var(--warn)}
+.db-tag.warn{color:var(--warn);border-color:var(--warn);font-weight:700}
+.db-tasks .db-soon .t-text{color:var(--ink3)}
 .db.is-past .db-title,.db.is-past .db-time{color:var(--ink3)}
 .db.is-skip .db-title>.db-name{text-decoration:line-through;color:var(--ink3)}
 .db.is-now{background:linear-gradient(90deg,var(--accent-soft),transparent 75%);border-radius:10px}
@@ -4136,14 +4138,34 @@ function dayMovedInto(d){
   });
   return out.sort((a,b)=>a.from.localeCompare(b.from));
 }
-/* 블록 과목 → Tasks.md 열린 할 일. 과목 칸이 ### 제목 앞부분이면 맞는다(대소문자 무시).
-   시작일(🛫)이 그 날보다 뒤인 항목은 아직 아니라 뺀다. 마감·예정이 가까운 순, 날짜 없는 것은 뒤 */
+/* 과목 칸 → 과목 이름 목록. 쉼표로 여러 과목을 적을 수 있다(예: '수리통계학(2), 행정수학') */
+function daySubjects(b){
+  return String(b.subject||"").split(/[,，]/).map(s=>s.trim()).filter(Boolean);
+}
+/* 블록 과목 → Tasks.md 열린 할 일. 과목 이름이 ### 제목 앞부분이면 맞는다(대소문자 무시).
+   그 날 할 것만 붙인다: 기준일(📅/⏳)이 그 날이거나 지난 것, 또는 시작일(🛫)이 지나 기준일 전인 것.
+   그런 것이 없으면 가장 가까운 다음 할 일 1개를 '다음'으로 붙인다(soon). 날짜 없는 할 일은 붙이지 않는다 */
 function dayTasksFor(b, d){
-  const key = String(b.subject||"").trim().toLowerCase();
-  if (!key) return [];
-  return vaultTasks.filter(x=>vtActive(x) && (!x.start || x.start <= d) &&
-      trCleanHead(x.subsection || x.section || "").toLowerCase().indexOf(key) === 0)
-    .sort((a,b)=> (vtDate(a)||"9999-99-99").localeCompare(vtDate(b)||"9999-99-99"));
+  const keys = daySubjects(b).map(s=>s.toLowerCase());
+  if (!keys.length) return [];
+  const mine = vaultTasks.filter(x=>{
+    if (!vtActive(x)) return false;
+    const h = trCleanHead(x.subsection || x.section || "").toLowerCase();
+    return keys.some(k=>h.indexOf(k) === 0);
+  }).sort((a,b)=> (vtDate(a)||"9999-99-99").localeCompare(vtDate(b)||"9999-99-99"));
+  const due = mine.filter(x=>{
+    const dt = vtDate(x);
+    if (dt && dt <= d) return true;
+    return !!(x.start && x.start <= d && dt);
+  });
+  if (due.length) return due;
+  const next = mine.find(x=>vtDate(x) && vtDate(x) > d && (!x.start || x.start <= vtDate(x)));
+  return next ? [Object.assign({ soon:true }, next)] : [];
+}
+/* 블록 할 일 중 마감이 3일 안인 것 — '먼저 뺄 블록'이어도 건너뛰기 전에 경고한다 */
+function dayUrgent(tasks, d){
+  const lim = addDays(d, 3);
+  return tasks.filter(x=>!x.soon && vtDate(x) && vtDate(x) <= lim && (x.due || vtIsDeadline(x)));
 }
 /* 블록 시간 안에 시작한 시간 추적 기록(분) */
 function dayLogged(b, d){
@@ -4158,6 +4180,9 @@ function dayClock(m){ return fmtClock(m % 1440); }
 function dayTaskHtml(x, d){
   const dd = vtDday(vtDate(x));
   const drop = (x.tags||[]).indexOf("#밀리면뺌") > -1;
+  if (x.soon) return '<li class="db-soon" data-vid="'+esc(x.id||"")+'" data-vline="'+x.line+'">'+
+    '<span class="t-text" title="'+esc(trTaskText(x))+'">다음 · '+esc(trTaskText(x))+'</span>'+
+    '<span class="dday">'+dd.label+'</span></li>';
   return '<li data-vid="'+esc(x.id||"")+'" data-vline="'+x.line+'">'+
     '<button class="check" data-act="dtoggle" aria-label="완료 표시"></button>'+
     '<span class="t-text" title="'+esc(trTaskText(x))+'">'+esc(trTaskText(x))+'</span>'+
@@ -4194,6 +4219,8 @@ function dayBlockHtml(b, d, ctx){
       : '<div class="db-done">옮겨 온 블록 없음 — 쉬거나 밀린 할 일을 한다</div>';
   }
   const tasks = (plan && plan.k !== "min" && plan.k !== "done") ? [] : dayTasksFor(b, d);
+  const urgent = plan ? [] : dayUrgent(tasks, d);
+  if (urgent.length) tags.push('<span class="db-tag warn" title="'+esc(urgent.map(trTaskText).join(" / "))+'">마감 '+vtDday(vtDate(urgent[0])).label+'</span>');
   if (tasks.length){
     body += '<ul class="db-tasks">'+tasks.slice(0,3).map(x=>dayTaskHtml(x, d)).join("")+
       (tasks.length > 3 ? '<li class="db-more">외 '+(tasks.length-3)+'개 — 할 일 카드에서</li>' : '')+'</ul>';
@@ -4213,7 +4240,9 @@ function dayBlockHtml(b, d, ctx){
           const bt = ctx.buffer.block, bd = ctx.buffer.date;
           acts.push('<button class="ghost sm" data-act="dmove" title="'+esc(shortDate(bd)+' '+DOW[dayDow(bd)]+' '+dayClock(bt.start)+' '+bt.title)+' 블록으로 옮긴다">연기 → '+DOW[dayDow(bd)]+'</button>');
         }
-        acts.push('<button class="ghost sm" data-act="dskip" title="오늘은 하지 않는다(할 일은 그대로)">'+(b.drop ? "건너뜀 (먼저 뺄 블록)" : "건너뜀")+'</button>');
+        acts.push(urgent.length
+          ? '<button class="ghost sm" data-act="dskip" data-urgent="1" title="마감이 3일 안인 할 일이 붙어 있습니다">건너뜀 (마감 주의)</button>'
+          : '<button class="ghost sm" data-act="dskip" title="오늘은 하지 않는다(할 일은 그대로)">'+(b.drop ? "건너뜀 (먼저 뺄 블록)" : "건너뜀")+'</button>');
       }
     }
   }
@@ -4299,7 +4328,7 @@ function renderDay(){
     if (!pick){ pick = live.find(b=>b.start > ctx.now); label = pick ? "다음 · " + dayClock(pick.start) + "부터" : ""; }
   } else { pick = live[0] || null; label = pick ? "내일 첫 블록 · " + dayClock(pick.start) : ""; }
   if (pick){
-    const v = pl[dayBlockKey(pick)], tk = dayTasksFor(pick, d)[0];
+    const v = pl[dayBlockKey(pick)], tk = dayTasksFor(pick, d).filter(x=>!x.soon)[0];
     nowEl.innerHTML = '<span class="dn-lb">'+esc(label)+'</span>'+
       '<span class="dn-t">'+esc(pick.title)+(v && v.k === "min" ? " — 감축 "+pick.min+"분" : "")+'</span>'+
       (pick.done ? '<span class="dn-s">끝: '+esc(pick.done)+'</span>' : '')+
@@ -4317,8 +4346,10 @@ function dayStart(b){
   const card = document.getElementById("cardTime");
   if (trRun){ toast("이미 기록 중입니다 — 시간 추적 카드에서 끝낸 뒤 시작하세요."); revealCard(card); card.scrollIntoView({behavior:"smooth", block:"center"}); return; }
   let subj = b.subject || b.title;
-  if (b.subject){
-    const key = b.subject.toLowerCase();
+  const first = daySubjects(b)[0] || "";
+  if (first){
+    subj = first;
+    const key = first.toLowerCase();
     trHeadSubjects().some(g=>g.names.some(n=>{ if (n.toLowerCase().indexOf(key) === 0){ subj = n; return true; } return false; }));
   }
   document.getElementById("trSubject").value = subj;
@@ -4343,7 +4374,7 @@ async function dayCancel(li){
   else { renderVaultTasks(); toast("빼지 못했습니다: " + ((res && res.error) || "연결 실패")); }
 }
 
-document.getElementById("dayLine").addEventListener("click", e=>{
+document.getElementById("dayLine").addEventListener("click", async e=>{
   const btn = e.target.closest("button[data-act]"); if (!btn) return;
   const act = btn.dataset.act;
   if (act === "dtoggle"){ vaultToggle(btn.closest("li")); return; }
@@ -4354,7 +4385,12 @@ document.getElementById("dayLine").addEventListener("click", e=>{
   if (act === "dstart") dayStart(b);
   else if (act === "dmin"){ daySet(d, key, { k:"min" }); toast("'" + b.title + "' 오늘은 " + b.min + "분만 합니다 — 되돌리기로 원래대로"); }
   else if (act === "ddone"){ daySet(d, key, { k:"done" }); toast("'" + b.title + "' 했음으로 표시했습니다."); }
-  else if (act === "dskip"){ daySet(d, key, { k:"skip" }); toast("'" + b.title + "' 오늘은 건너뜁니다(할 일은 그대로) — 되돌리기로 원래대로"); }
+  else if (act === "dskip"){
+    if (btn.dataset.urgent){
+      const u = dayUrgent(dayTasksFor(b, d), d);
+      if (!(await confirmDialog("이 블록에 마감이 가까운 할 일이 있습니다: " + u.map(x=>trTaskText(x) + " (" + vtDday(vtDate(x)).label + ")").join(" / ") + " — 그래도 건너뛸까요? 버퍼로 연기하는 편이 안전합니다."))) return;
+    }
+    daySet(d, key, { k:"skip" }); toast("'" + b.title + "' 오늘은 건너뜁니다(할 일은 그대로) — 되돌리기로 원래대로"); }
   else if (act === "dmove"){
     const buf = dayNextBuffer(d); if (!buf){ toast("7일 안에 버퍼 블록이 없습니다 — 주간-틀.md에 '버퍼' 블록을 넣으세요."); return; }
     daySet(d, key, { k:"move", to: buf.date, title: b.title });

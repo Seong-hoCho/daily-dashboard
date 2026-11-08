@@ -351,6 +351,8 @@ li.vt .dday,.db-tasks li .dday{white-space:nowrap;width:auto;min-width:48px;just
 .db-tag.ok{color:var(--m-todo);border-color:var(--m-todo)}
 .db-tag.alt{color:var(--warn);border-color:var(--warn)}
 .db-tag.warn{color:var(--warn);border-color:var(--warn);font-weight:700}
+.wo-panel.wo-orphan{border:1px dashed var(--ink3);border-radius:12px;padding:10px;margin-bottom:10px}
+.wo-panel.wo-orphan::before{content:"세트 입력 — 붙여 둔 습관이 지워졌습니다 · '습관 관리'에서 다시 고르세요";display:block;font-size:12px;color:var(--ink2);margin-bottom:6px}
 .db-tag.late{color:var(--ink2);border-style:dashed;border-color:var(--ink3)}
 .day-now .dn-share{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-bottom:4px}
 .day-now .dn-share b{font:600 15px/1.2 var(--f-num);font-variant-numeric:tabular-nums;color:var(--ink)}
@@ -4706,10 +4708,15 @@ function hbPlacePanel(){
   if (!panel || !hold) return;
   const W = woState();
   const row = W.habitId && document.querySelector('#habitList .habit[data-id="'+W.habitId+'"]');
+  panel.classList.remove("wo-orphan");
   if (row && woOpen){ row.insertBefore(panel, row.querySelector(".grass")); }
-  else if (!row && W.exercises.length){
-    /* 연결된 습관이 없으면 기록이 사라져 보이지 않게 목록 아래에 그대로 둔다 */
-    document.getElementById("habitList").appendChild(panel);
+  else if (W.habitId && !row && W.exercises.length){
+    /* 붙여 둔 습관을 지웠을 때만 — 기록이 사라져 보이지 않게 목록 맨 위에 '붙은 습관 없음'으로 둔다.
+       '붙이지 않음'을 고른 것(habitId 빈 값)이면 숨긴다. 예전에는 둘 다 목록 아래에 두어
+       방금 추가한 마지막 습관에 붙은 것처럼 보였다(2026-11-08) */
+    panel.classList.add("wo-orphan");
+    const list = document.getElementById("habitList");
+    list.insertBefore(panel, list.firstChild);
   } else hold.appendChild(panel);
 }
 function renderHabits(){
@@ -4817,7 +4824,17 @@ function hbSleepBackfill(){
   const n = hbSleepSync(hbDays(), { quiet:true });
   if (n) toast("최근 30일 수면 기록으로 "+n+"일을 체크했습니다.");
 }
-document.getElementById("hbSleepHabit").addEventListener("change", e=>{
+/* 연결을 끊는 선택(빈 값)은 한 번 더 묻는다 — 2026-11-08 습관을 추가하던 중 두 연결이 함께 빈 값으로
+   저장된 일이 있었다(기기 브라우저가 선택 칸을 비운 것으로 보임). 의도한 해제만 통과시킨다 */
+async function hbConfirmUnlink(sel, prev, what){
+  if (sel.value || !prev || !S.habits.some(h=>h.id === prev)) return true;
+  const name = (S.habits.find(h=>h.id === prev) || {}).name || "";
+  if (await confirmDialog("'" + name + "'에 붙은 " + what + " 연결을 끊을까요?")) return true;
+  sel.value = prev;
+  return false;
+}
+document.getElementById("hbSleepHabit").addEventListener("change", async e=>{
+  if (!(await hbConfirmUnlink(e.target, hbCfg().sleepHabitId, "수면 자동 체크"))) return;
   hbCfg().sleepHabitId = e.target.value; hbSleepBackfill(); save(); renderHabits(); hbAfterChange();
 });
 document.getElementById("hbBedTarget").addEventListener("change", e=>{
@@ -4984,7 +5001,10 @@ document.getElementById("woExList").addEventListener("click", async e=>{
   }
   save(); renderWorkout();
 });
-document.getElementById("woHabit").addEventListener("change", e=>{ woState().habitId = e.target.value; save(); renderHabits(); renderWorkout(); });
+document.getElementById("woHabit").addEventListener("change", async e=>{
+  if (!(await hbConfirmUnlink(e.target, woState().habitId, "세트 입력"))) return;
+  woState().habitId = e.target.value; save(); renderHabits(); renderWorkout();
+});
 
 /* ══ 목표 카드 접기 ═══ 접으면 요약 타일만. 상태는 이 기기에만 기억한다 */
 function goalsFoldApply(){

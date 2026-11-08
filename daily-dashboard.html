@@ -351,8 +351,13 @@ li.vt .dday,.db-tasks li .dday{white-space:nowrap;width:auto;min-width:48px;just
 .db-tag.ok{color:var(--m-todo);border-color:var(--m-todo)}
 .db-tag.alt{color:var(--warn);border-color:var(--warn)}
 .db-tag.warn{color:var(--warn);border-color:var(--warn);font-weight:700}
+.hb-addrow{margin-bottom:10px}
+.hb-addrow[hidden]{display:none}
+.hb-menu{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px;padding:8px;border:1px solid var(--rule);border-radius:10px;background:var(--paper)}
+.hb-menu .danger{color:var(--signal,#C93A31);border-color:currentColor}
+.hb-more{font-size:18px;line-height:1;letter-spacing:1px}
 .wo-panel.wo-orphan{border:1px dashed var(--ink3);border-radius:12px;padding:10px;margin-bottom:10px}
-.wo-panel.wo-orphan::before{content:"세트 입력 — 붙여 둔 습관이 지워졌습니다 · '습관 관리'에서 다시 고르세요";display:block;font-size:12px;color:var(--ink2);margin-bottom:6px}
+.wo-panel.wo-orphan::before{content:"세트 입력 — 붙여 둔 습관이 없습니다 · 습관의 ⋯에서 '세트 입력 붙이기'";display:block;font-size:12px;color:var(--ink2);margin-bottom:6px}
 .db-tag.late{color:var(--ink2);border-style:dashed;border-color:var(--ink3)}
 .day-now .dn-share{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-bottom:4px}
 .day-now .dn-share b{font:600 15px/1.2 var(--f-num);font-variant-numeric:tabular-nums;color:var(--ink)}
@@ -1273,7 +1278,12 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
         <span class="spacer"></span>
         <input type="date" id="woDate" aria-label="날짜">
         <button class="ghost sm" id="woToday">오늘</button>
+        <button class="ghost sm" id="hbAddOpen" aria-expanded="false" aria-controls="hbAddRow">+ 습관</button>
       </h2>
+      <div class="row form-row hb-addrow" id="hbAddRow" hidden>
+        <input type="text" id="habitName" class="grow" placeholder="새 습관 이름 (예: 기상 7시)" aria-label="새 습관 이름">
+        <button class="btn" id="habitAdd">추가</button>
+      </div>
       <div id="habitList"></div>
       <div id="woHold" hidden>
         <div class="wo-panel" id="woPanel">
@@ -1298,21 +1308,12 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
         </div>
       </div>
       <details class="help" id="hbManage">
-        <summary>습관 관리</summary>
-        <div class="row form-row mt-4">
-          <input type="text" id="habitName" class="grow" placeholder="습관 이름 (예: 기상 7시)" aria-label="새 습관 이름">
-          <button class="btn" id="habitAdd">추가</button>
-        </div>
-        <div class="row hb-cfg">
-          <span class="mini">세트 입력을 붙일 습관</span>
-          <select id="woHabit" aria-label="세트 입력을 붙일 습관"></select>
-        </div>
-        <div class="row hb-cfg">
-          <span class="mini">수면 기록으로 자동 체크할 습관</span>
-          <select id="hbSleepHabit" aria-label="수면 기록으로 자동 체크할 습관"></select>
-          <span class="mini">목표 취침</span>
+        <summary>습관 설정 · 사용법</summary>
+        <div class="row hb-cfg mt-4">
+          <span class="mini">수면 자동 체크의 목표 취침</span>
           <input type="time" id="hbBedTarget" aria-label="목표 취침 시각">
         </div>
+        <p>습관마다 오른쪽 <b>⋯</b>에서 세트 입력 붙이기·수면 자동 체크·이름 바꾸기·삭제를 합니다. 세트 입력과 수면 자동 체크는 각각 습관 하나에만 붙습니다.</p>
         <p>체크 칸을 누르거나 '한 것'을 적으면 그날 습관이 체크됩니다. '한 것'은 비워 둬도 됩니다. 세트를 적으면 연결한 습관이 체크되고, 수면 연동 습관은 그날 밤 취침이 목표 시각 이전이면 수면을 저장할 때 체크됩니다. 지우거나 늦게 자도 체크는 풀지 않습니다(손으로 고칩니다).</p>
       </details>
     </section>
@@ -4160,14 +4161,25 @@ document.getElementById("planMigrate").addEventListener("click", async ()=>{
 });
 
 /* ══ 습관 ═══════════════════════════════════════════════ */
+/* '+ 습관'으로 카드 맨 위에 입력 줄을 연다(예전에는 카드 맨 아래 접힌 '습관 관리' 안에 있었다) */
+function hbAddShow(on, focus){
+  const row = document.getElementById("hbAddRow"), btn = document.getElementById("hbAddOpen");
+  row.hidden = !on; btn.setAttribute("aria-expanded", on ? "true" : "false");
+  if (on && focus) document.getElementById("habitName").focus();
+}
+document.getElementById("hbAddOpen").addEventListener("click", ()=>{
+  hbAddShow(document.getElementById("hbAddRow").hidden, true);
+});
 document.getElementById("habitAdd").addEventListener("click", ()=>{
   const el = document.getElementById("habitName");
-  const name = el.value.trim(); if(!name) return;
+  const name = el.value.replace(/\s+/g, " ").trim(); if(!name){ el.focus(); return; }
   S.habits.push({ id:uid(), name, log:{} }); el.value="";
-  save(); renderAll();
+  save(); renderAll(); hbAddShow(false);
+  toast("'"+name+"'을 추가했습니다 — ⋯에서 세트 입력·수면 자동 체크를 붙일 수 있습니다.");
 });
 document.getElementById("habitName").addEventListener("keydown", e=>{
-  if(e.key==="Enter") document.getElementById("habitAdd").click();
+  if(e.key==="Enter" && !e.isComposing) document.getElementById("habitAdd").click();
+  if(e.key==="Escape"){ e.target.value = ""; hbAddShow(false); document.getElementById("hbAddOpen").focus(); }
 });
 function streaks(h){
   const t = today();
@@ -4666,6 +4678,21 @@ function hbKind(h){
   const c = hbCfg(); if (h.id === c.sleepHabitId) return "sleep";
   return "note";
 }
+/* 습관 줄의 ⋯ 메뉴 — 세트 입력·수면 자동 체크를 그 습관에서 바로 붙이고 뗀다(2026-11-08~).
+   예전에는 카드 아래 '습관 관리'의 선택 칸 두 개로 골라야 해서 찾기 어려웠다 */
+let hbMenuFor = null;
+function hbMenuHtml(h){
+  const k = hbKind(h), W = woState(), c = hbCfg();
+  const woOther = W.habitId && W.habitId !== h.id && S.habits.find(x=>x.id === W.habitId);
+  const slOther = c.sleepHabitId && c.sleepHabitId !== h.id && S.habits.find(x=>x.id === c.sleepHabitId);
+  const b = (act, label, title)=>'<button class="ghost sm" data-act="'+act+'"'+(title ? ' title="'+esc(title)+'"' : '')+'>'+label+'</button>';
+  return '<div class="hb-menu" role="group" aria-label="'+esc(h.name)+' 메뉴">'+
+    (k === "wo" ? b("wooff", "세트 입력 떼기") : b("woon", "세트 입력 붙이기", woOther ? "'"+woOther.name+"'에서 옮겨 옵니다" : "운동처럼 세트를 적는 습관"))+
+    (k === "sleep" ? b("sleepoff", "수면 자동 체크 끄기") : b("sleepon", "수면으로 자동 체크", slOther ? "'"+slOther.name+"'에서 옮겨 옵니다" : "목표 시각 전에 자면 체크"))+
+    b("rename", "이름 바꾸기")+
+    '<button class="ghost sm danger" data-act="delhabit">삭제</button>'+
+  '</div>';
+}
 function hbDays(){ const t = today(), days = []; for (let i=29;i>=0;i--) days.push(addDays(t,-i)); return days; }
 function hbTopHtml(h, day){
   const t = today(), days = hbDays();
@@ -4673,7 +4700,7 @@ function hbTopHtml(h, day){
   return '<button class="hb-chk'+(on?" on":"")+'" data-act="tick" aria-pressed="'+on+'" aria-label="'+esc(h.name)+' — '+shortDate(day)+' '+(on?"체크됨":"체크 안 됨")+'" title="'+(on?"체크 풀기":"체크")+'">✓</button>'+
     '<span class="n">'+esc(h.name)+'</span>'+
     '<span class="streak">30일 중 <b>'+n30+'</b>일'+(st.cur>1 ? ' · 연속 '+st.cur+'일' : '')+' · 최장 '+st.best+'일</span>'+
-    '<button class="icon-btn" data-act="delhabit" title="삭제" aria-label="'+esc(h.name)+' 삭제">×</button>';
+    '<button class="icon-btn hb-more" data-act="hbmenu" title="습관 메뉴" aria-haspopup="true" aria-expanded="'+(hbMenuFor===h.id)+'" aria-label="'+esc(h.name)+' 메뉴">⋯</button>';
 }
 function hbGrassHtml(h, day){
   const t = today();
@@ -4731,24 +4758,17 @@ function renderHabits(){
   document.getElementById("habitCount").textContent = S.habits.length ? nOn+"/"+S.habits.length : "0";
   if(!S.habits.length){
     el.innerHTML = '<div class="empty">아래 \'습관 관리\'에서 기록할 습관을 추가해 보세요. 최근 30일이 한눈에 보입니다.</div>';
-    document.getElementById("hbManage").open = true;
+    hbAddShow(true);
   } else {
     el.innerHTML = S.habits.map(h=>
       '<div class="habit" data-id="'+esc(h.id)+'">'+
         '<div class="habit-top">'+hbTopHtml(h, day)+'</div>'+
+        (hbMenuFor === h.id ? hbMenuHtml(h) : '')+
         '<div class="hb-line">'+hbLineHtml(h, day)+'</div>'+
         '<div class="grass">'+hbGrassHtml(h, day)+'</div></div>').join("");
   }
   hbPlacePanel();
-  /* 습관 관리의 고르기 칸 */
-  const opts = sel => '<option value="">'+sel+'</option>' + S.habits.map(h=>'<option value="'+esc(h.id)+'">'+esc(h.name)+'</option>').join("");
-  const hs = document.getElementById("woHabit"), o1 = opts("붙이지 않음");
-  if (hs.innerHTML !== o1) hs.innerHTML = o1;
-  hs.value = S.habits.some(h=>h.id === woState().habitId) ? woState().habitId : "";
-  const ss = document.getElementById("hbSleepHabit"), o2 = opts("자동 체크 안 함");
-  if (ss.innerHTML !== o2) ss.innerHTML = o2;
   const c = hbCfg();
-  ss.value = S.habits.some(h=>h.id === c.sleepHabitId) ? c.sleepHabitId : "";
   const bt = document.getElementById("hbBedTarget");
   if (document.activeElement !== bt) bt.value = c.bedTarget || "";
 }
@@ -4775,12 +4795,57 @@ document.getElementById("habitList").addEventListener("click", async e=>{
   const box = e.target.closest(".habit"); if(!box) return;
   if (e.target.closest("#woPanel")) return;          /* 운동 패널 안의 클릭은 운동 쪽이 처리 */
   const h = S.habits.find(x=>x.id===box.dataset.id); if(!h) return;
-  if (e.target.closest('[data-act="delhabit"]')){
-    if (!(await confirmDialog("'"+h.name+"' 습관과 그동안의 기록을 모두 삭제할까요?"))) return;
+  const act = (e.target.closest("[data-act]") || {}).dataset ? e.target.closest("[data-act]").dataset.act : null;
+  if (act === "hbmenu"){ hbMenuFor = hbMenuFor === h.id ? null : h.id; renderHabits(); renderWorkout();
+    const f = document.querySelector('#habitList .habit[data-id="'+h.id+'"] .hb-menu button'); if (f) f.focus(); return; }
+  if (act === "delhabit"){
+    const W = woState(), c = hbCfg();
+    const extra = W.habitId === h.id ? " 세트 입력 연결도 풀립니다(세트 기록은 남습니다)." : c.sleepHabitId === h.id ? " 수면 자동 체크 연결도 풀립니다." : "";
+    if (!(await confirmDialog("'"+h.name+"' 습관과 그동안의 기록을 모두 삭제할까요?"+extra))) return;
     S.habits = S.habits.filter(x=>x.id!==h.id);
     Object.keys(hbNotes()).forEach(d=>hbSetNote(d, h.id, ""));
+    if (W.habitId === h.id) W.habitId = "";
+    if (c.sleepHabitId === h.id) c.sleepHabitId = "";
+    hbMenuFor = null;
     save(); renderAll(); return;
   }
+  if (act === "rename"){
+    const v = await promptDialog("새 이름", { title:"습관 이름 바꾸기", value:h.name, okLabel:"바꾸기" });
+    if (v){ h.name = v; hbMenuFor = null; save(); renderAll(); toast("이름을 바꿨습니다."); }
+    return;
+  }
+  if (act === "woon"){
+    const W = woState();
+    W.habitId = h.id; hbMenuFor = null; woOpen = true;
+    try{ localStorage.setItem("dd-wo-open", "1"); }catch(err){}
+    save(); renderHabits(); renderWorkout();
+    if (!W.exercises.length){
+      const m = document.getElementById("woManage"); if (m) m.open = true;
+      const n = document.getElementById("woName"); if (n) n.focus();
+      toast("'"+h.name+"'에 세트 입력을 붙였습니다 — 종목을 추가하세요.");
+    } else toast("'"+h.name+"'에 세트 입력을 붙였습니다.");
+    return;
+  }
+  if (act === "wooff"){
+    if (!(await confirmDialog("'"+h.name+"'에서 세트 입력을 뗄까요? 종목과 세트 기록은 남고, 다른 습관에 다시 붙일 수 있습니다."))) return;
+    woState().habitId = ""; hbMenuFor = null; save(); renderHabits(); renderWorkout(); toast("세트 입력을 뗐습니다."); return;
+  }
+  if (act === "sleepon"){
+    const c = hbCfg(); c.sleepHabitId = h.id; hbMenuFor = null;
+    if (/^\d\d:\d\d$/.test(c.bedTarget||"")){ hbSleepBackfill(); save(); renderHabits(); hbAfterChange(); toast("'"+h.name+"'을 수면 기록으로 자동 체크합니다."); }
+    else {
+      save(); renderHabits();
+      const m = document.getElementById("hbManage"); m.open = true;
+      const bt = document.getElementById("hbBedTarget"); bt.scrollIntoView({behavior:"smooth", block:"center"}); bt.focus();
+      toast("목표 취침 시각을 정하면 그 전에 잔 날을 체크합니다.");
+    }
+    return;
+  }
+  if (act === "sleepoff"){
+    if (!(await confirmDialog("'"+h.name+"'의 수면 자동 체크를 끌까요? 이미 체크된 날은 그대로 둡니다."))) return;
+    hbCfg().sleepHabitId = ""; hbMenuFor = null; save(); renderHabits(); toast("수면 자동 체크를 껐습니다."); return;
+  }
+  if (e.target.closest(".hb-menu")) return;
   if (e.target.closest('[data-act="wo"]')){
     woOpen = !woOpen;
     try{ localStorage.setItem("dd-wo-open", woOpen ? "1" : "0"); }catch(err){}
@@ -4824,19 +4889,6 @@ function hbSleepBackfill(){
   const n = hbSleepSync(hbDays(), { quiet:true });
   if (n) toast("최근 30일 수면 기록으로 "+n+"일을 체크했습니다.");
 }
-/* 연결을 끊는 선택(빈 값)은 한 번 더 묻는다 — 2026-11-08 습관을 추가하던 중 두 연결이 함께 빈 값으로
-   저장된 일이 있었다(기기 브라우저가 선택 칸을 비운 것으로 보임). 의도한 해제만 통과시킨다 */
-async function hbConfirmUnlink(sel, prev, what){
-  if (sel.value || !prev || !S.habits.some(h=>h.id === prev)) return true;
-  const name = (S.habits.find(h=>h.id === prev) || {}).name || "";
-  if (await confirmDialog("'" + name + "'에 붙은 " + what + " 연결을 끊을까요?")) return true;
-  sel.value = prev;
-  return false;
-}
-document.getElementById("hbSleepHabit").addEventListener("change", async e=>{
-  if (!(await hbConfirmUnlink(e.target, hbCfg().sleepHabitId, "수면 자동 체크"))) return;
-  hbCfg().sleepHabitId = e.target.value; hbSleepBackfill(); save(); renderHabits(); hbAfterChange();
-});
 document.getElementById("hbBedTarget").addEventListener("change", e=>{
   hbCfg().bedTarget = e.target.value || ""; hbSleepBackfill(); save(); renderHabits(); hbAfterChange();
 });
@@ -5001,10 +5053,7 @@ document.getElementById("woExList").addEventListener("click", async e=>{
   }
   save(); renderWorkout();
 });
-document.getElementById("woHabit").addEventListener("change", async e=>{
-  if (!(await hbConfirmUnlink(e.target, woState().habitId, "세트 입력"))) return;
-  woState().habitId = e.target.value; save(); renderHabits(); renderWorkout();
-});
+
 
 /* ══ 목표 카드 접기 ═══ 접으면 요약 타일만. 상태는 이 기기에만 기억한다 */
 function goalsFoldApply(){

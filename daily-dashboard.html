@@ -792,6 +792,11 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
 .gm-row input{width:100%;min-width:0}
 .gm-box .seg button{padding:5px 12px}
 .gm-week{margin-top:16px;border-top:1px solid var(--rule2);padding-top:14px}
+.pv-week{margin-top:16px;border-top:1px solid var(--rule2);padding-top:14px}
+.pv-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:8px}
+.pv-row .pv-l{font-size:12.5px;color:var(--ink2);min-width:84px}
+.pv-row b{font-size:16px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.pv-row b.pv-late{color:var(--signal,#C93A31)}
 .gm-list{list-style:none;margin:9px 0 0;padding:0;display:grid;gap:7px}
 .gm-list li{font-size:12.5px;line-height:1.45;color:var(--ink2);min-width:0;overflow-wrap:anywhere}
 .gm-list .gm-d{font-family:var(--f-num);font-size:11px;color:var(--ink3);margin-right:6px}
@@ -1165,6 +1170,15 @@ details.done-section summary{font-family:var(--f-text);font-size:12px;letter-spa
           <span class="mini">실적 <b id="capActual">0:00</b></span>
           <span class="mini">상한 <b id="capLimit">25:00</b></span>
         </div>
+      </div>
+
+      <div class="pv-week" id="pvWeek">
+        <div class="cap-head">
+          <span class="eyebrow">계획 대비 · 일요일~오늘</span>
+          <span class="mini" id="pvNote">—</span>
+        </div>
+        <div class="pv-row"><span class="pv-l">공부 시간</span><b class="mono" id="pvTime">—</b><span class="mini" id="pvTimeSub"></span></div>
+        <div class="pv-row"><span class="pv-l">첫 기록 시각</span><b class="mono" id="pvFirst">—</b><span class="mini" id="pvFirstSub"></span></div>
       </div>
 
       <div class="gm-week">
@@ -4824,6 +4838,7 @@ function renderDay(){
   }
   nowEl.innerHTML = top;
 
+  try{ renderPlanVs(); }catch(e){}
   const w = dayWeekStats();
   document.getElementById("dayWeek").innerHTML = w.plan
     ? '이번 주 공부 블록 <b>'+w.done+'/'+w.plan+'</b> 함'+(w.min ? ' · 감축 '+w.min : '')+(w.skip ? ' · 건너뜀 '+w.skip : '')+(w.move ? ' · 연기 '+w.move : '')
@@ -5476,7 +5491,53 @@ function renderWeek(){
   document.getElementById("stSleep").textContent = slAvg ? fmtClock(slAvg) : "—";
 
   renderCap(actualMin, ws, we);
+  renderPlanVs();
   renderWrapWeek(days);
+}
+/* 계획 대비(일요일~오늘) — 주간 틀의 공부 블록 목표(감축이면 감축 분, 건너뜀·옮겨 간 블록 제외, 옮겨 온 블록 포함)와
+   실제 공부 기록, 그리고 그날 첫 기록 시각과 첫 공부 블록 시각. 오늘은 아직 남은 블록도 계획에 들어간다.
+   05시 전 기록은 전날 밤의 연장으로 보고 24시를 더해 평균한다 */
+function pvMin(hhmm){ const p = String(hhmm||"").split(":"); if (p.length < 2) return null; let m = (+p[0])*60 + (+p[1]); if (m < 300) m += 1440; return m; }
+function renderPlanVs(){
+  const el = document.getElementById("pvWeek"); if (!el) return;
+  const t = today(), days = [];
+  for (let d = weekStart(); d <= t; d = addDays(d,1)) days.push(d);
+  if (!routineData){
+    el.hidden = !goalsLinked();
+    document.getElementById("pvNote").textContent = "주간 틀을 읽으면 보입니다";
+    ["pvTime","pvFirst"].forEach(id=>document.getElementById(id).textContent = "—");
+    ["pvTimeSub","pvFirstSub"].forEach(id=>document.getElementById(id).textContent = "");
+    return;
+  }
+  el.hidden = false;
+  let plan = 0, act = 0; const diffs = [], firsts = [], planFirsts = []; let noRec = 0;
+  days.forEach(d=>{
+    const pl = dayPlanOf(d);
+    const blocks = dayEffBlocks(d).filter(b=>b.kind === "study" && dayLive(d, b));
+    blocks.forEach(b=>{ plan += dayTarget(b, pl[b.key]); });
+    const ss = S.sessions.filter(x=>x.date === d && x.minutes > 0);
+    act += ss.reduce((a,x)=>a + x.minutes, 0);
+    const f = ss.map(x=>pvMin(x.startTime)).filter(x=>x !== null).sort((a,b)=>a-b)[0];
+    const pf = blocks.length ? Math.min.apply(null, blocks.map(b=>b.start)) : null;
+    if (f !== undefined) firsts.push(f);
+    if (pf !== null) planFirsts.push(pf);
+    if (f !== undefined && pf !== null) diffs.push(f - pf);
+    if (pf !== null && f === undefined && d < t) noRec++;
+  });
+  const avg = a=>a.reduce((x,y)=>x+y,0) / a.length;
+  document.getElementById("pvNote").textContent = days.length + "일" + (days.length ? " · 오늘 남은 블록 포함" : "");
+  document.getElementById("pvTime").textContent = plan ? fmtClock(act) + " / " + fmtClock(plan) : fmtClock(act);
+  document.getElementById("pvTimeSub").textContent = plan ? Math.round(act / plan * 100) + "%" : "이번 주 계획 블록 없음";
+  const fEl = document.getElementById("pvFirst");
+  fEl.textContent = firsts.length ? "평균 " + dayClock(Math.round(avg(firsts))) : "—";
+  let sub = planFirsts.length ? "계획 첫 블록 평균 " + dayClock(Math.round(avg(planFirsts))) : "";
+  if (diffs.length){
+    const dv = Math.round(avg(diffs));
+    sub += " · " + (Math.abs(dv) < 10 ? "거의 계획대로" : fmtClock(Math.abs(dv)) + (dv > 0 ? " 늦음" : " 이름")) + " (" + diffs.length + "일 비교)";
+    fEl.classList.toggle("pv-late", dv >= 60);
+  } else fEl.classList.remove("pv-late");
+  if (noRec) sub += " · 기록 없는 날 " + noRec;
+  document.getElementById("pvFirstSub").textContent = sub;
 }
 /* 이번 주(일~토) 갈무리 — 두 칸을 채운 날 수와, '남길 곳'을 고른 항목 */
 function renderWrapWeek(days){
